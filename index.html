@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>别让红块亮</title>
+<meta name="theme-color" content="#FFFFFF">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- 引入 Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  (function () {
+    try {
+      var saved = localStorage.getItem('rgj-theme');
+      if (saved === 'dark' || saved === 'light') {
+        document.documentElement.setAttribute('data-theme', saved);
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    } catch (e) {}
+  })();
+</script>
+<style>
+  /* ==================== M3 亮色 ==================== */
+  :root {
+    color-scheme: light;
+    --primary: #6750A4;
+    --on-primary: #FFFFFF;
+    --primary-container: #EADDFF;
+    --on-primary-container: #21005D;
+    --secondary-container: #E8DEF8;
+    --on-secondary-container: #1D192B;
+    --tertiary-container: #FFD8E4;
+    --on-tertiary-container: #31111D;
+    --surface: #FFFFFF;
+    --on-surface: #1D1B20;
+    --on-surface-variant: #49454F;
+    --surface-container-low: #F7F2FA;
+    --surface-container: #F3EDF7;
+    --surface-container-high: #ECE6F0;
+    --surface-container-highest: #E6E0E9;
+    --surface-variant: #E7E0EC;
+    --outline: #79747E;
+    --outline-variant: #CAC4D0;
+    --error: #B3261E;
+    --error-hover: #C43A32;
+    --ripple: rgba(255, 255, 255, .55);
+    --state-hover: rgba(29, 27, 32, .08);
+    --state-press: rgba(29, 27, 32, .12);
+    --elev1: 0 1px 2px rgba(0, 0, 0, .3), 0 1px 3px 1px rgba(0, 0, 0, .15);
+    --elev2: 0 1px 2px rgba(0, 0, 0, .3), 0 2px 6px 2px rgba(0, 0, 0, .15);
+    --elev3: 0 1px 3px rgba(0, 0, 0, .3), 0 4px 8px 3px rgba(0, 0, 0, .15);
+    
+    --gold: #FFD700;
+    --silver: #C0C0C0;
+    --bronze: #CD7F32;
+  }
+
+  /* ==================== M3 暗色 ==================== */
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --primary: #D0BCFF;
+    --on-primary: #381E72;
+    --primary-container: #4F378B;
+    --on-primary-container: #EADDFF;
+    --secondary-container: #4A4458;
+    --on-secondary-container: #E8DEF8;
+    --tertiary-container: #633B48;
+    --on-tertiary-container: #FFD8E4;
+    --surface: #000000;
+    --on-surface: #E6E0E9;
+    --on-surface-variant: #CAC4D0;
+    --surface-container-low: #121216;
+    --surface-container: #1A1A1F;
+    --surface-container-high: #232328;
+    --surface-container-highest: #2E2E34;
+    --surface-variant: #49454F;
+    --outline: #938F99;
+    --outline-variant: #49454F;
+    --error: #FF5449;
+    --error-hover: #FF6B62;
+    --ripple: rgba(105, 0, 5, .40);
+    --state-hover: rgba(230, 224, 233, .08);
+    --state-press: rgba(230, 224, 233, .14);
+    --elev1: 0 1px 3px rgba(0, 0, 0, .8);
+    --elev2: 0 2px 6px rgba(0, 0, 0, .9);
+    --elev3: 0 6px 16px rgba(0, 0, 0, .95);
+    
+    --gold: #FFD700;
+    --silver: #A0A0A0;
+    --bronze: #B87333;
+  }
+
+  * { box-sizing: border-box; }
+  html { height: 100%; overflow: hidden; overscroll-behavior: none; }
+
+  body {
+    position: fixed;
+    inset: 0;
+    margin: 0;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: none;
+    display: flex;
+    font-family: 'Roboto', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+    background: var(--surface);
+    color: var(--on-surface);
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color .3s ease, color .3s ease;
+  }
+
+  .app {
+    margin: 0 auto;
+    width: 100%;
+    max-width: 600px;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  /* ==================== 顶部栏 ==================== */
+  .top-bar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 40px;
+    padding: 0 4px;
+  }
+
+  .app-title {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: .1px;
+    color: var(--on-surface);
+    white-space: nowrap;
+  }
+
+  .actions {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: 0 0 auto;
+  }
+
+  .icon-btn {
+    width: 40px; height: 40px; flex: 0 0 auto;
+    display: grid; place-items: center;
+    border: none; border-radius: 50%; background: transparent;
+    color: var(--on-surface-variant); cursor: pointer;
+    transition: background-color .2s ease, color .2s ease, transform .1s ease;
+  }
+  .icon-btn:hover { background: var(--state-hover); color: var(--on-surface); }
+  .icon-btn:active { background: var(--state-press); transform: scale(.92); }
+  .icon-btn.active { background: var(--secondary-container); color: var(--on-secondary-container); }
+  .icon-btn svg { display: block; pointer-events: none; }
+  .icon-hidden { display: none !important; }
+
+  /* ==================== 弹窗与菜单 ==================== */
+  .menu-backdrop, .modal-backdrop {
+    position: fixed; inset: 0; z-index: 30;
+    background: rgba(0, 0, 0, .3);
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity .18s ease, visibility .18s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .menu-backdrop { background: transparent; }
+  .menu-backdrop.open, .modal-backdrop.open { opacity: 1; visibility: visible; pointer-events: auto; }
+
+  .settings-menu {
+    position: absolute;
+    top: 44px; right: 0; width: 284px; max-width: calc(100vw - 28px);
+    padding: 14px; border-radius: 20px;
+    background: var(--surface-container);
+    box-shadow: var(--elev3); z-index: 40;
+    display: flex; flex-direction: column; gap: 16px;
+    transform-origin: top right; opacity: 0; visibility: hidden; pointer-events: none;
+    transform: scale(.9) translateY(-8px);
+    transition: opacity .14s ease, transform .22s cubic-bezier(.2, 0, 0, 1), visibility .22s;
+  }
+  .settings-menu.open { opacity: 1; visibility: visible; pointer-events: auto; transform: scale(1) translateY(0); }
+  .menu-section { display: flex; flex-direction: column; gap: 8px; }
+  .menu-label { font-size: 11.5px; font-weight: 500; letter-spacing: .5px; color: var(--on-surface-variant); }
+
+  .switch-row { display: flex; align-items: center; justify-content: space-between; padding: 2px 0; }
+  .switch-desc { font-size: 12.5px; color: var(--on-surface); font-weight: 500; }
+
+  .m3-switch {
+    position: relative; width: 52px; height: 32px; border-radius: 16px;
+    border: 2px solid var(--outline); background: transparent;
+    cursor: pointer; padding: 0; transition: background-color .2s, border-color .2s; flex: 0 0 auto;
+  }
+  .m3-switch[aria-checked="true"] { background: var(--primary); border-color: var(--primary); }
+  .switch-thumb {
+    position: absolute; top: 50%; left: 6px; transform: translateY(-50%);
+    width: 16px; height: 16px; border-radius: 50%; background: var(--outline);
+    transition: width .2s, height .2s, left .2s, background-color .2s; pointer-events: none;
+  }
+  .m3-switch[aria-checked="true"] .switch-thumb { left: 18px; width: 24px; height: 24px; background: var(--on-primary); }
+
+  .size-grid { display: flex; border: 1px solid var(--outline); border-radius: 999px; overflow: hidden; }
+  .size-grid button {
+    flex: 1; height: 38px; border: none; border-right: 1px solid var(--outline);
+    background: transparent; color: var(--on-surface);
+    font-family: inherit; font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: background-color .2s ease, color .2s ease;
+  }
+  .size-grid button:last-child { border-right: none; }
+  .size-grid button:hover { background: var(--state-hover); }
+  .size-grid button.selected { background: var(--secondary-container); color: var(--on-secondary-container); font-weight: 700; }
+
+  .menu-stepper {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 48px; padding: 0 4px; border-radius: 999px; background: var(--surface-container-highest);
+  }
+  .stepper-btn {
+    width: 40px; height: 40px; display: grid; place-items: center;
+    border: none; border-radius: 50%; background: transparent;
+    color: var(--on-surface); font-family: inherit; font-size: 22px; line-height: 1;
+    cursor: pointer; transition: background-color .2s ease, transform .1s ease;
+  }
+  .stepper-btn:hover:not(:disabled) { background: var(--state-hover); }
+  .stepper-btn:active:not(:disabled) { background: var(--state-press); transform: scale(.9); }
+  .stepper-btn:disabled { opacity: .32; cursor: not-allowed; }
+  .stepper-value { min-width: 48px; text-align: center; font-weight: 700; font-size: 16px; color: var(--on-surface); }
+
+  /* ==================== 排行榜弹窗 ==================== */
+  .leaderboard-dialog {
+    background: var(--surface-container-high);
+    width: 90%; max-width: 400px; max-height: 80vh;
+    border-radius: 28px; box-shadow: var(--elev3);
+    display: flex; flex-direction: column;
+    transform: scale(.9); transition: transform .2s cubic-bezier(.2, 0, 0, 1);
+    overflow: hidden;
+  }
+  .modal-backdrop.open .leaderboard-dialog { transform: scale(1); }
+
+  .dialog-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 12px; }
+  .dialog-title { margin: 0; font-size: 22px; font-weight: 400; color: var(--on-surface); }
+  .close-btn {
+    width: 36px; height: 36px; border: none; border-radius: 50%;
+    background: transparent; color: var(--on-surface-variant);
+    display: grid; place-items: center; cursor: pointer;
+  }
+  .close-btn:hover { background: var(--state-hover); }
+
+  .leaderboard-list {
+    flex: 1; overflow-y: auto; padding: 0 16px 16px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  
+  .empty-state { text-align: center; padding: 32px 0; color: var(--on-surface-variant); font-size: 14px; }
+
+  .rank-item {
+    display: flex; align-items: center; padding: 12px 14px;
+    background: var(--surface-container); border-radius: 16px; gap: 12px;
+  }
+  .rank-item:nth-child(1) { border: 1px solid var(--gold); }
+  .rank-item:nth-child(2) { border: 1px solid var(--silver); }
+  .rank-item:nth-child(3) { border: 1px solid var(--bronze); }
+
+  .rank-num {
+    width: 24px; text-align: center; font-size: 16px; font-weight: 700;
+    font-variant-numeric: tabular-nums; color: var(--on-surface-variant);
+  }
+  .rank-item:nth-child(1) .rank-num { color: var(--gold); }
+  .rank-item:nth-child(2) .rank-num { color: var(--silver); }
+  .rank-item:nth-child(3) .rank-num { color: var(--bronze); }
+
+  .rank-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .rank-score-row { display: flex; align-items: baseline; gap: 4px; }
+  .rank-score { font-size: 20px; font-weight: 700; color: var(--primary); font-variant-numeric: tabular-nums; }
+  .rank-unit { font-size: 11px; color: var(--on-surface-variant); }
+
+  .rank-meta {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    font-size: 11px; color: var(--on-surface-variant);
+  }
+  .rank-tag { padding: 2px 6px; border-radius: 6px; background: var(--surface-variant); color: var(--on-surface); font-weight: 500; }
+  .rank-tag.hard { background: var(--error); color: var(--on-primary); }
+
+  /* ==================== HUD ==================== */
+  .hud {
+    flex: 0 0 auto; position: relative;
+    display: flex; align-items: center; justify-content: space-around;
+    padding: 12px 6px 14px; border-radius: 20px; background: var(--surface-container);
+  }
+
+  .hud-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+  .hud-stat.primary .hud-value {
+    font-size: 38px; font-weight: 700; line-height: 1.05;
+    font-variant-numeric: tabular-nums; color: var(--primary); letter-spacing: -1px;
+  }
+  .hud-stat.primary #timer { color: var(--error); }
+  .hud-stat.primary #timer.urgent { animation: pulseNum .75s ease-in-out infinite; }
+
+  .hud-stat.secondary .hud-value {
+    font-size: 20px; font-weight: 700; line-height: 1.2;
+    font-variant-numeric: tabular-nums; color: var(--on-surface);
+  }
+
+  .hud-label {
+    font-size: 11px; font-weight: 500; letter-spacing: .5px;
+    color: var(--on-surface-variant); white-space: nowrap;
+    display: flex; align-items: center; gap: 3px;
+  }
+
+  .hard-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--error); }
+  .hud-divider { width: 1px; height: 34px; border-radius: 1px; background: var(--outline-variant); }
+
+  @keyframes pulseNum { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+
+  .hud-progress {
+    position: absolute; left: 14px; right: 14px; bottom: 6px;
+    height: 4px; border-radius: 2px; overflow: hidden; background: var(--surface-variant);
+  }
+  .hud-progress-bar {
+    height: 100%; width: 100%; border-radius: 2px; background: var(--primary);
+    transition: width .35s linear, background-color .3s ease;
+  }
+  .hud-progress-bar.low { background: var(--error); }
+
+  /* ==================== 棋盘 ==================== */
+  .board-area { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .board { flex: 0 0 auto; padding: 6px; border-radius: 24px; background: var(--surface-container-low); }
+  #grid { display: grid; width: 100%; height: 100%; gap: 8px; touch-action: none; }
+
+  .cell {
+    position: relative; overflow: hidden; min-width: 0; min-height: 0;
+    border-radius: var(--cell-radius, 14px); background: var(--surface-container-highest);
+    transition: background-color .2s ease, border-radius .3s ease; will-change: transform;
+  }
+
+  .cell.red { cursor: pointer; background: var(--error); }
+  @media (hover: hover) { .cell.red:hover { background: var(--error-hover); } }
+
+  .cell.hit { animation: hit .28s cubic-bezier(.2, 0, 0, 1); }
+  @keyframes hit { 0% { transform: scale(1); } 35% { transform: scale(.85); } 100% { transform: scale(1); } }
+
+  .cell.appear { animation: appear .32s cubic-bezier(.05, .75, .15, 1); }
+  @keyframes appear { 0% { transform: scale(.55); opacity: .3; } 100% { transform: scale(1); opacity: 1; } }
+
+  .cell.wrong { background: var(--error) !important; animation: wrongShake .4s ease; }
+  @keyframes wrongShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 50% { transform: translateX(6px); } 75% { transform: translateX(-6px); } }
+
+  .ripple {
+    position: absolute; border-radius: 50%; background: var(--ripple);
+    transform: scale(0); animation: ripple .5s ease-out forwards;
+    pointer-events: none; z-index: 2;
+  }
+  @keyframes ripple { to { transform: scale(1); opacity: 0; } }
+
+  /* ==================== 底部 ==================== */
+  .footer { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 4px; padding-bottom: 4px; }
+
+  .start-btn {
+    position: relative; overflow: hidden; border: none; border-radius: 999px;
+    height: 50px; width: 100%; max-width: 320px; padding: 0 30px;
+    font-family: inherit; font-size: 16px; font-weight: 500; letter-spacing: .3px;
+    color: var(--on-primary); background: var(--primary); box-shadow: var(--elev1);
+    cursor: pointer; transition: background-color .3s ease, color .3s ease, box-shadow .2s ease, transform .1s ease;
+  }
+  .start-btn:hover { box-shadow: var(--elev2); }
+  .start-btn:active { transform: scale(.975); }
+  .btn-label { position: relative; z-index: 1; }
+
+  .status {
+    height: 18px; line-height: 18px; font-size: 12.5px; letter-spacing: .2px;
+    text-align: center; color: var(--on-surface-variant); white-space: nowrap; overflow: hidden;
+  }
+  .status.done { color: var(--primary); font-weight: 500; }
+
+  @media (max-height: 660px) {
+    .app { gap: 4px; }
+    .app-title { font-size: 17px; }
+    .hud-stat.primary .hud-value { font-size: 32px; }
+    .hud-stat.secondary .hud-value { font-size: 18px; }
+    .hud { padding: 8px 6px 12px; }
+    .start-btn { height: 44px; font-size: 14px; }
+    .status { height: 16px; line-height: 16px; font-size: 12px; }
+    .board { padding: 4px; }
+    #grid { gap: 5px; }
+  }
+
+  @media (max-width: 370px) {
+    .app-title { font-size: 16px; }
+    .icon-btn { width: 36px; height: 36px; }
+    .settings-menu { width: 260px; padding: 12px; }
+    .hud-stat.primary .hud-value { font-size: 30px; }
+    .hud-stat.secondary .hud-value { font-size: 16px; }
+    .hud-label { font-size: 10px; }
+    .leaderboard-dialog { width: 95%; }
+    .rank-item { padding: 10px; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="app">
+    <header class="top-bar">
+      <h1 class="app-title">别让红块亮</h1>
+
+      <div class="actions">
+        <button id="soundBtn" class="icon-btn" aria-label="音效开关" title="音效开关">
+          <svg id="iconSoundOn" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+          <svg id="iconSoundOff" class="icon-hidden" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M22 9l-5 5M17 9l5 5"/></svg>
+        </button>
+
+        <button id="themeBtn" class="icon-btn" aria-label="切换主题" title="切换主题">
+          <svg id="iconMoon" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <svg id="iconSun" class="icon-hidden" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.2v2.2M12 19.6v2.2M4.4 4.4l1.6 1.6M18 18l1.6 1.6M2.2 12h2.2M19.6 12h2.2M4.4 19.6L6 18M18 6l1.6-1.6"/></svg>
+        </button>
+
+        <button id="leaderboardBtn" class="icon-btn" aria-label="排行榜" title="全球排行榜">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+            <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
+          </svg>
+        </button>
+
+        <button id="settingsBtn" class="icon-btn" aria-label="游戏设置" title="游戏设置" aria-haspopup="true" aria-expanded="false">
+          <svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor">
+            <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+          </svg>
+        </button>
+
+        <div class="settings-menu" id="settingsMenu" role="dialog" aria-label="游戏设置">
+          <div class="menu-section">
+            <div class="switch-row">
+              <span class="switch-desc">困难模式 (点错即输)</span>
+              <button type="button" role="switch" id="hardModeSwitch" class="m3-switch" aria-checked="false">
+                <span class="switch-thumb"></span>
+              </button>
+            </div>
+          </div>
+
+          <div class="menu-section">
+            <div class="menu-label">网格大小</div>
+            <div class="size-grid" id="sizeSegmented" role="radiogroup" aria-label="网格大小">
+              <button type="button" data-size="2" role="radio" aria-checked="false">2×2</button>
+              <button type="button" data-size="4" role="radio" aria-checked="true" class="selected">4×4</button>
+              <button type="button" data-size="6" role="radio" aria-checked="false">6×6</button>
+              <button type="button" data-size="8" role="radio" aria-checked="false">8×8</button>
+            </div>
+          </div>
+
+          <div class="menu-section">
+            <div class="menu-label">红格子数量</div>
+            <div class="menu-stepper">
+              <button type="button" class="stepper-btn" id="redMinus" aria-label="减少红格子">−</button>
+              <span class="stepper-value" id="redValue">3</span>
+              <button type="button" class="stepper-btn" id="redPlus" aria-label="增加红格子">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="hud">
+      <div class="hud-stat primary">
+        <span class="hud-value" id="score">0</span>
+        <span class="hud-label" id="scoreLabel">得分 <span id="hardModeDot" class="hard-dot" style="display:none;"></span></span>
+      </div>
+      <div class="hud-divider" aria-hidden="true"></div>
+      <div class="hud-stat secondary">
+        <span class="hud-value" id="highScore">0</span>
+        <span class="hud-label">最高</span>
+      </div>
+      <div class="hud-stat secondary">
+        <span class="hud-value" id="cps">0.0</span>
+        <span class="hud-label">速度</span>
+      </div>
+      <div class="hud-divider" aria-hidden="true"></div>
+      <div class="hud-stat primary">
+        <span class="hud-value" id="timer">30</span>
+        <span class="hud-label">秒</span>
+      </div>
+      <div class="hud-progress"><div class="hud-progress-bar" id="progressBar"></div></div>
+    </div>
+
+    <div class="board-area" id="boardArea">
+      <div class="board" id="board">
+        <div id="grid"></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button id="startBtn" class="start-btn"><span class="btn-label">开始游戏</span></button>
+      <div id="status" class="status"></div>
+    </div>
+  </div>
+
+  <div class="menu-backdrop" id="menuBackdrop"></div>
+
+  <!-- 排行榜弹窗 -->
+  <div class="modal-backdrop" id="leaderboardModal" role="dialog" aria-modal="true" aria-labelledby="lbTitle">
+    <div class="leaderboard-dialog">
+      <div class="dialog-header">
+        <h2 class="dialog-title" id="lbTitle">全球排行榜 Top 10</h2>
+        <button class="close-btn" id="closeLeaderboard" aria-label="关闭排行榜">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+      <div class="leaderboard-list" id="leaderboardList"></div>
+    </div>
+  </div>
+
+<script>
+  /* =====================================================
+     初始化 Supabase
+     ===================================================== */
+  const SUPABASE_URL = 'https://toyfeieljoiyglutepwn.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_gM4mD5WkhDqUgm97Bb4lKg_S04pcGVm';
+  
+  let supabaseClient = null;
+  try {
+    if (window.supabase) {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+  } catch(e) {
+    console.error('Supabase 初始化失败', e);
+  }
+
+  /* =====================================================
+     音效引擎
+     ===================================================== */
+  const Sound = (() => {
+    let ctx = null, master = null, muted = false;
+    try { muted = localStorage.getItem('rgj-muted') === '1'; } catch (e) { muted = false; }
+
+    function ensure() {
+      if (!ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        ctx = new AC();
+        master = ctx.createGain();
+        master.gain.value = 0.85;
+        const comp = ctx.createDynamicsCompressor();
+        comp.threshold.value = -18; comp.knee.value = 24; comp.ratio.value = 8;
+        comp.attack.value = 0.003; comp.release.value = 0.2;
+        master.connect(comp); comp.connect(ctx.destination);
+      }
+      if (ctx.state === 'suspended') ctx.resume();
+      return ctx;
+    }
+
+    function tone(freq, opts = {}) {
+      const c = ensure();
+      if (!c) return;
+      const { type = 'triangle', dur = 0.16, gain = 0.16, delay = 0, slideTo = null, attack = 0.006 } = opts;
+      const t0 = c.currentTime + delay;
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t0);
+      if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur * 0.75);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.linearRampToValueAtTime(gain, t0 + attack);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(g); g.connect(master);
+      osc.start(t0); osc.stop(t0 + dur + 0.02);
+    }
+
+    const PENTA = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21];
+    const BASE = 392;
+
+    return {
+      unlock() { ensure(); },
+      click(step) {
+        if (muted) return;
+        const semi = PENTA[step % PENTA.length];
+        const f = BASE * Math.pow(2, semi / 12);
+        tone(f, { type: 'triangle', dur: 0.15, gain: 0.15, slideTo: f * 1.5 });
+        tone(f * 2, { type: 'sine', dur: 0.09, gain: 0.055 });
+      },
+      start() {
+        if (muted) return;
+        [392, 523.25, 659.25, 783.99].forEach((f, i) => tone(f, { type: 'triangle', dur: 0.18, gain: 0.13, delay: i * 0.075 }));
+      },
+      end() {
+        if (muted) return;
+        [659.25, 523.25, 392, 293.66].forEach((f, i) => tone(f, { type: 'sine', dur: 0.3, gain: 0.15, delay: i * 0.11 }));
+      },
+      fail() {
+        if (muted) return;
+        tone(220, { type: 'sawtooth', dur: 0.25, gain: 0.15, slideTo: 110 });
+        tone(110, { type: 'square', dur: 0.4, gain: 0.15, delay: 0.15 });
+      },
+      get muted() { return muted; },
+      setMuted(v) {
+        muted = v;
+        try { localStorage.setItem('rgj-muted', v ? '1' : '0'); } catch (e) {}
+        if (!v) ensure();
+      }
+    };
+  })();
+
+  /* =====================================================
+     主题与 UI 基础设置
+     ===================================================== */
+  const root = document.documentElement;
+  const themeBtn = document.getElementById('themeBtn');
+  const iconMoon = document.getElementById('iconMoon');
+  const iconSun = document.getElementById('iconSun');
+  const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+  const soundBtn = document.getElementById('soundBtn');
+  const iconSoundOn = document.getElementById('iconSoundOn');
+  const iconSoundOff = document.getElementById('iconSoundOff');
+
+  function applyTheme(theme, persist) {
+    root.setAttribute('data-theme', theme);
+    const dark = theme === 'dark';
+    iconMoon.classList.toggle('icon-hidden', dark);
+    iconSun.classList.toggle('icon-hidden', !dark);
+    if (metaThemeColor) metaThemeColor.setAttribute('content', dark ? '#000000' : '#FFFFFF');
+    if (persist) { try { localStorage.setItem('rgj-theme', theme); } catch (e) {} }
+  }
+
+  themeBtn.addEventListener('click', () => {
+    Sound.unlock();
+    applyTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark', true);
+  });
+  applyTheme(root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light', false);
+
+  function refreshSoundIcon() {
+    const m = Sound.muted;
+    iconSoundOn.classList.toggle('icon-hidden', m);
+    iconSoundOff.classList.toggle('icon-hidden', !m);
+  }
+  soundBtn.addEventListener('click', () => { Sound.setMuted(!Sound.muted); refreshSoundIcon(); if (!Sound.muted) Sound.click(0); });
+  refreshSoundIcon();
+
+  /* =====================================================
+     设置菜单与困难模式
+     ===================================================== */
+  const settingsBtn  = document.getElementById('settingsBtn');
+  const settingsMenu = document.getElementById('settingsMenu');
+  const menuBackdrop = document.getElementById('menuBackdrop');
+  const hardModeSwitch = document.getElementById('hardModeSwitch');
+  const hardModeDot = document.getElementById('hardModeDot');
+
+  let hardMode = false;
+  try { hardMode = localStorage.getItem('rgj-hardmode') === '1'; } catch(e) {}
+
+  function updateHardModeUI() {
+    hardModeSwitch.setAttribute('aria-checked', hardMode ? 'true' : 'false');
+    hardModeDot.style.display = hardMode ? 'inline-block' : 'none';
+  }
+  updateHardModeUI();
+
+  hardModeSwitch.addEventListener('click', () => {
+    Sound.unlock();
+    hardMode = !hardMode;
+    try { localStorage.setItem('rgj-hardmode', hardMode ? '1' : '0'); } catch(e) {}
+    updateHardModeUI();
+    applyConfig();
+    statusEl.textContent = hardMode ? '困难模式已开启：点错即输' : '已切回标准模式';
+    statusEl.style.color = hardMode ? 'var(--error)' : 'var(--on-surface-variant)';
+    setTimeout(() => {
+      if (statusEl.textContent === (hardMode ? '困难模式已开启：点错即输' : '已切回标准模式')) {
+        statusEl.textContent = ''; statusEl.style.color = '';
+      }
+    }, 2500);
+  });
+
+  function openMenu() {
+    settingsMenu.classList.add('open'); menuBackdrop.classList.add('open');
+    settingsBtn.classList.add('active'); settingsBtn.setAttribute('aria-expanded', 'true');
+  }
+  function closeMenu() {
+    settingsMenu.classList.remove('open'); menuBackdrop.classList.remove('open');
+    settingsBtn.classList.remove('active'); settingsBtn.setAttribute('aria-expanded', 'false');
+  }
+  settingsBtn.addEventListener('click', () => { Sound.unlock(); settingsMenu.classList.contains('open') ? closeMenu() : openMenu(); });
+  menuBackdrop.addEventListener('click', closeMenu);
+
+  /* =====================================================
+     排行榜 (云端)
+     ===================================================== */
+  const leaderboardBtn = document.getElementById('leaderboardBtn');
+  const leaderboardModal = document.getElementById('leaderboardModal');
+  const closeLeaderboardBtn = document.getElementById('closeLeaderboard');
+  const leaderboardListEl = document.getElementById('leaderboardList');
+  const highScoreEl = document.getElementById('highScore');
+
+  // 从云端获取历史最高分
+  async function fetchGlobalHighScore() {
+    if (!supabaseClient) return;
+    try {
+      const { data, error } = await supabaseClient
+        .from('leaderboard')
+        .select('score')
+        .order('score', { ascending: false })
+        .limit(1);
+      
+      if (!error && data && data.length > 0) {
+        highScoreEl.textContent = data[0].score;
+      }
+    } catch (e) {
+      console.error('获取最高分失败:', e);
+    }
+  }
+
+  // 渲染云端排行榜
+  async function renderLeaderboard() {
+    leaderboardListEl.innerHTML = '<div class="empty-state">正在加载全网数据...</div>';
+    
+    if (!supabaseClient) {
+      leaderboardListEl.innerHTML = '<div class="empty-state">无法连接排行榜服务器</div>';
+      return;
+    }
+
+    try {
+      const { data, error } = await supabaseClient
+        .from('leaderboard')
+        .select('*')
+        .order('score', { ascending: false })
+        .order('cps', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        leaderboardListEl.innerHTML = '<div class="empty-state">暂无记录，快去成为世界第一吧！</div>';
+        return;
+      }
+
+      let html = '';
+      data.forEach((item, index) => {
+        const rank = index + 1;
+        const hardClass = item.hard ? 'hard' : '';
+        const hardText = item.hard ? '困难' : '标准';
+        const cps = item.cps ? item.cps.toFixed(1) : '0.0';
+        
+        html += `
+          <div class="rank-item">
+            <div class="rank-num">${rank}</div>
+            <div class="rank-info">
+              <div class="rank-score-row">
+                <span class="rank-score">${item.score}</span>
+                <span class="rank-unit">分</span>
+              </div>
+              <div class="rank-meta">
+                <span class="rank-tag ${hardClass}">${hardText}</span>
+                <span class="rank-tag">${item.grid}</span>
+                <span class="rank-tag">${item.reds}红</span>
+                <span>${cps} CPS</span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      leaderboardListEl.innerHTML = html;
+    } catch (err) {
+      console.error(err);
+      leaderboardListEl.innerHTML = '<div class="empty-state">加载失败，请检查网络</div>';
+    }
+  }
+
+  // 将分数提交到云端
+  async function recordScore(finalScore, finalCps, playedTime) {
+    if (finalScore <= 0 || !supabaseClient) return; 
+    
+    try {
+      const { error } = await supabaseClient
+        .from('leaderboard')
+        .insert([{
+          score: finalScore,
+          cps: parseFloat(finalCps),
+          grid: `${gridSize}x${gridSize}`,
+          reds: numReds,
+          hard: hardMode
+        }]);
+        
+      if (error) throw error;
+      
+      // 提交成功后刷新一下全局最高分
+      fetchGlobalHighScore();
+    } catch (e) {
+      console.error('分数上传失败:', e.message);
+    }
+  }
+
+  leaderboardBtn.addEventListener('click', () => {
+    Sound.unlock();
+    renderLeaderboard();
+    leaderboardModal.classList.add('open');
+  });
+  closeLeaderboardBtn.addEventListener('click', () => leaderboardModal.classList.remove('open'));
+  leaderboardModal.addEventListener('click', (e) => { if (e.target === leaderboardModal) leaderboardModal.classList.remove('open'); });
+
+
+  /* =====================================================
+     游戏主体逻辑
+     ===================================================== */
+  const GAME_TIME = 30;
+  let gridSize = 4;
+  let numReds = 3;
+
+  const cells = [];
+  const reds = new Set();
+  let clickTimes = [];
+  let score = 0;
+  let timeLeft = GAME_TIME;
+  let running = false;
+  let timerId = null;
+
+  const gridEl      = document.getElementById('grid');
+  const boardEl     = document.getElementById('board');
+  const boardArea   = document.getElementById('boardArea');
+  const scoreEl     = document.getElementById('score');
+  const cpsEl       = document.getElementById('cps');
+  const timerEl     = document.getElementById('timer');
+  const progressBar = document.getElementById('progressBar');
+  const startBtn    = document.getElementById('startBtn');
+  const btnLabel    = startBtn.querySelector('.btn-label');
+  const statusEl    = document.getElementById('status');
+  const redValueEl  = document.getElementById('redValue');
+  const redMinus    = document.getElementById('redMinus');
+  const redPlus     = document.getElementById('redPlus');
+  const sizeSegmented = document.getElementById('sizeSegmented');
+
+  function fitBoard() {
+    const r = boardArea.getBoundingClientRect();
+    if (r.width <= 0 || r.height <= 0) return;
+    const size = Math.floor(Math.min(r.width, r.height));
+    if (size <= 0) return;
+    boardEl.style.width = size + 'px';
+    boardEl.style.height = size + 'px';
+  }
+
+  if (window.ResizeObserver) new ResizeObserver(fitBoard).observe(boardArea);
+  window.addEventListener('resize', fitBoard);
+  window.addEventListener('orientationchange', () => setTimeout(fitBoard, 160));
+
+  function totalCells() { return gridSize * gridSize; }
+  function maxReds()    { return totalCells() - 1; }
+
+  function updateRedStepper() {
+    redValueEl.textContent = numReds;
+    redMinus.disabled = numReds <= 1;
+    redPlus.disabled  = numReds >= maxReds();
+  }
+
+  function updateSizeButtons() {
+    sizeSegmented.querySelectorAll('button').forEach(btn => {
+      const isSel = +btn.dataset.size === gridSize;
+      btn.classList.toggle('selected', isSel);
+      btn.setAttribute('aria-checked', isSel ? 'true' : 'false');
+    });
+  }
+
+  function rebuildGrid() {
+    gridEl.innerHTML = '';
+    cells.length = 0;
+    reds.clear();
+
+    const n = gridSize;
+    gridEl.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+    gridEl.style.gridTemplateRows    = `repeat(${n}, 1fr)`;
+
+    const gap = n <= 2 ? 12 : n <= 4 ? 8 : n <= 6 ? 6 : 4;
+    gridEl.style.gap = gap + 'px';
+
+    const radius = n <= 2 ? 22 : n <= 4 ? 16 : n <= 6 ? 11 : 8;
+    root.style.setProperty('--cell-radius', radius + 'px');
+
+    const total = n * n;
+    for (let i = 0; i < total; i++) {
+      const el = document.createElement('div');
+      el.className = 'cell';
+      el.addEventListener('pointerdown', (e) => onPointerDown(e, i));
+      el.addEventListener('contextmenu', (e) => e.preventDefault());
+      gridEl.appendChild(el);
+      cells.push(el);
+    }
+    fitBoard();
+  }
+
+  function randomEmpty(exclude) {
+    const total = cells.length;
+    const empties = [];
+    for (let i = 0; i < total; i++) {
+      if (!reds.has(i) && i !== exclude) empties.push(i);
+    }
+    if (empties.length === 0) {
+      for (let i = 0; i < total; i++) if (!reds.has(i)) return i;
+      return -1;
+    }
+    return empties[(Math.random() * empties.length) | 0];
+  }
+
+  function paintRed(index) {
+    if (index < 0) return;
+    reds.add(index);
+    const el = cells[index];
+    el.classList.remove('appear');
+    void el.offsetWidth;
+    el.classList.add('red', 'appear');
+    clearTimeout(el._appearTimer);
+    el._appearTimer = setTimeout(() => el.classList.remove('appear'), 360);
+  }
+
+  function clearAllCells() {
+    reds.clear();
+    cells.forEach(el => {
+      clearTimeout(el._appearTimer);
+      el.classList.remove('red', 'appear', 'hit', 'wrong');
+      const r = el.querySelector('.ripple');
+      if (r) r.remove();
+    });
+  }
+
+  function spawnReds() {
+    let guard = 0;
+    while (reds.size < numReds && guard++ < 900) {
+      const idx = randomEmpty(-1);
+      if (idx < 0) break;
+      paintRed(idx);
+    }
+  }
+
+  function spawnRipple(cell, e) {
+    const rect = cell.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height) * 2.3;
+    const cx = (typeof e.clientX === 'number' ? e.clientX : rect.left + rect.width / 2) - rect.left;
+    const cy = (typeof e.clientY === 'number' ? e.clientY : rect.top + rect.height / 2) - rect.top;
+
+    const span = document.createElement('span');
+    span.className = 'ripple';
+    span.style.width  = size + 'px';
+    span.style.height = size + 'px';
+    span.style.left = (cx - size / 2) + 'px';
+    span.style.top  = (cy - size / 2) + 'px';
+    cell.appendChild(span);
+    span.addEventListener('animationend', () => span.remove());
+  }
+
+  function onPointerDown(e, index) {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (!running) return;
+
+    if (hardMode && !reds.has(index)) {
+      e.preventDefault();
+      Sound.unlock();
+      const el = cells[index];
+      el.classList.add('wrong');
+      setTimeout(() => el.classList.remove('wrong'), 400);
+      failGame();
+      return;
+    }
+
+    if (!reds.has(index)) return;
+
+    e.preventDefault();
+    Sound.unlock();
+    clickTimes.push(performance.now());
+    
+    const el = cells[index];
+    spawnRipple(el, e);
+
+    reds.delete(index);
+    clearTimeout(el._appearTimer);
+    el.classList.remove('red', 'appear');
+
+    el.classList.remove('hit');
+    void el.offsetWidth;
+    el.classList.add('hit');
+    setTimeout(() => el.classList.remove('hit'), 300);
+
+    const next = randomEmpty(index);
+    if (next >= 0) paintRed(next);
+
+    score++;
+    Sound.click(score - 1);
+    updateHUD();
+  }
+
+  function updateHUD() {
+    scoreEl.textContent = score;
+    timerEl.textContent = timeLeft;
+    const pct = Math.max(0, Math.min(1, timeLeft / GAME_TIME)) * 100;
+    progressBar.style.width = pct + '%';
+    const low = timeLeft <= 10;
+    progressBar.classList.toggle('low', low);
+    timerEl.classList.toggle('urgent', low && running);
+  }
+
+  function applyConfig() {
+    const wasRunning = running;
+    if (running) { running = false; clearInterval(timerId); }
+
+    score = 0;
+    timeLeft = GAME_TIME;
+    btnLabel.textContent = '开始游戏';
+    cpsEl.textContent = '0.0';
+    clickTimes = [];
+
+    if (wasRunning) {
+      statusEl.textContent = '配置已更新，请重新开始';
+      statusEl.classList.remove('done');
+      statusEl.style.color = '';
+    } else {
+      statusEl.textContent = '';
+      statusEl.classList.remove('done');
+      statusEl.style.color = '';
+    }
+
+    rebuildGrid();
+    spawnReds();
+    updateHUD();
+    fitBoard();
+  }
+
+  function startGame() {
+    clearInterval(timerId);
+    clearAllCells();
+    Sound.unlock(); Sound.start();
+
+    score = 0;
+    timeLeft = GAME_TIME;
+    running = true;
+    clickTimes = [];
+
+    statusEl.textContent = '';
+    statusEl.classList.remove('done');
+    statusEl.style.color = '';
+    btnLabel.textContent = '重新开始';
+
+    spawnReds();
+    updateHUD();
+    timerId = setInterval(tick, 1000);
+  }
+
+  function tick() {
+    timeLeft--;
+    if (timeLeft < 0) timeLeft = 0;
+    updateHUD();
+    if (timeLeft <= 0) endGame();
+  }
+
+  function endGame() {
+    running = false;
+    clearInterval(timerId);
+    clearAllCells();
+
+    progressBar.style.width = '0%';
+    progressBar.classList.remove('low');
+    timerEl.classList.remove('urgent');
+
+    statusEl.textContent = `时间到！本局得分 ${score}`;
+    statusEl.classList.add('done');
+    statusEl.style.color = '';
+    btnLabel.textContent = '再来一局';
+
+    const playedTime = Math.max(1, GAME_TIME);
+    const avgCps = (score / playedTime).toFixed(1);
+    recordScore(score, avgCps, playedTime);
+
+    cpsEl.textContent = '0.0';
+    clickTimes = [];
+    Sound.end();
+  }
+
+  function failGame() {
+    if (!running) return;
+    running = false;
+    clearInterval(timerId);
+
+    reds.clear();
+    cells.forEach((el) => {
+      clearTimeout(el._appearTimer);
+      el.classList.remove('red', 'appear');
+      const r = el.querySelector('.ripple');
+      if (r) r.remove();
+    });
+
+    progressBar.style.width = '0%';
+    progressBar.classList.remove('low');
+    timerEl.classList.remove('urgent');
+
+    statusEl.textContent = `踩到空格！本局得分 ${score}`;
+    statusEl.classList.add('done');
+    statusEl.style.color = 'var(--error)';
+    btnLabel.textContent = '再来一局';
+
+    const playedTime = Math.max(1, GAME_TIME - timeLeft);
+    const avgCps = (score / playedTime).toFixed(1);
+    recordScore(score, avgCps, playedTime);
+
+    cpsEl.textContent = '0.0';
+    clickTimes = [];
+    Sound.fail();
+  }
+
+  setInterval(() => {
+    if (!running) return;
+    const now = performance.now();
+    clickTimes = clickTimes.filter(t => now - t < 2000);
+    cpsEl.textContent = (clickTimes.length / 2).toFixed(1);
+  }, 200);
+
+  sizeSegmented.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      Sound.unlock();
+      const size = +btn.dataset.size;
+      if (size === gridSize) return;
+      gridSize = size;
+      if (numReds > maxReds()) numReds = maxReds();
+      if (numReds < 1) numReds = 1;
+      updateSizeButtons();
+      updateRedStepper();
+      applyConfig();
+    });
+  });
+
+  redMinus.addEventListener('click', () => { Sound.unlock(); if (numReds > 1) { numReds--; updateRedStepper(); applyConfig(); } });
+  redPlus.addEventListener('click', () => { Sound.unlock(); if (numReds < maxReds()) { numReds++; updateRedStepper(); applyConfig(); } });
+  startBtn.addEventListener('click', startGame);
+
+  updateSizeButtons();
+  updateRedStepper();
+  applyConfig();
+
+  // 页面加载时拉取一次全局最高分
+  fetchGlobalHighScore();
+
+  if (document.fonts && document.fonts.ready) { document.fonts.ready.then(fitBoard); }
+  setTimeout(fitBoard, 60);
+  setTimeout(fitBoard, 320);
+</script>
+</body>
+</html>
