@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>别让红块亮</title>
+<title>红色格子跳跃</title>
 <meta name="theme-color" content="#FFFFFF">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -261,7 +261,7 @@
     display: flex; flex-direction: column; gap: 6px;
   }
   
-  .empty-state { text-align: center; padding: 32px 0; color: var(--on-surface-variant); font-size: 14px; }
+  .empty-state { text-align: center; padding: 32px 0; color: var(--on-surface-variant); font-size: 14px; line-height: 1.6; word-break: break-all; }
 
   .rank-item {
     display: flex; align-items: center; padding: 12px 14px;
@@ -410,7 +410,7 @@
 
   <div class="app">
     <header class="top-bar">
-      <h1 class="app-title">别让红块亮</h1>
+      <h1 class="app-title">红色格子跳跃</h1>
 
       <div class="actions">
         <button id="soundBtn" class="icon-btn" aria-label="音效开关" title="音效开关">
@@ -518,10 +518,10 @@
 
 <script>
   /* =====================================================
-     初始化 Supabase
+     初始化 Supabase 
      ===================================================== */
-  const SUPABASE_URL = 'https://toyfeieljoiyglutepwn.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_gM4mD5WkhDqUgm97Bb4lKg_S04pcGVm';
+  const SUPABASE_URL = 'https://xtallluwwwwaubiirkyg.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_0x39Opbg_iQoGd9Zo4EpCQ_z9u1Jo7T';
   
   let supabaseClient = null;
   try {
@@ -686,7 +686,7 @@
   menuBackdrop.addEventListener('click', closeMenu);
 
   /* =====================================================
-     排行榜 (云端)
+     排行榜 (云端) - 详细错误显示
      ===================================================== */
   const leaderboardBtn = document.getElementById('leaderboardBtn');
   const leaderboardModal = document.getElementById('leaderboardModal');
@@ -694,7 +694,6 @@
   const leaderboardListEl = document.getElementById('leaderboardList');
   const highScoreEl = document.getElementById('highScore');
 
-  // 从云端获取历史最高分
   async function fetchGlobalHighScore() {
     if (!supabaseClient) return;
     try {
@@ -707,17 +706,14 @@
       if (!error && data && data.length > 0) {
         highScoreEl.textContent = data[0].score;
       }
-    } catch (e) {
-      console.error('获取最高分失败:', e);
-    }
+    } catch (e) {}
   }
 
-  // 渲染云端排行榜
   async function renderLeaderboard() {
     leaderboardListEl.innerHTML = '<div class="empty-state">正在加载全网数据...</div>';
     
     if (!supabaseClient) {
-      leaderboardListEl.innerHTML = '<div class="empty-state">无法连接排行榜服务器</div>';
+      leaderboardListEl.innerHTML = '<div class="empty-state">无法连接排行榜服务器(初始化失败)</div>';
       return;
     }
 
@@ -729,7 +725,10 @@
         .order('cps', { ascending: false })
         .limit(10);
 
-      if (error) throw error;
+      if (error) {
+        // 把 Supabase 返回的具体错误码展示出来
+        throw new Error(`${error.message} (${error.code || ''})`);
+      }
 
       if (!data || data.length === 0) {
         leaderboardListEl.innerHTML = '<div class="empty-state">暂无记录，快去成为世界第一吧！</div>';
@@ -764,14 +763,18 @@
       leaderboardListEl.innerHTML = html;
     } catch (err) {
       console.error(err);
-      leaderboardListEl.innerHTML = '<div class="empty-state">加载失败，请检查网络</div>';
+      // 显示具体的错误消息
+      leaderboardListEl.innerHTML = `
+        <div class="empty-state">
+          <span style="color:var(--error);font-weight:700;">加载失败：</span><br>
+          ${err.message || '网络连接超时，请尝试挂梯子后重试。'}
+        </div>
+      `;
     }
   }
 
-  // 将分数提交到云端
   async function recordScore(finalScore, finalCps, playedTime) {
     if (finalScore <= 0 || !supabaseClient) return; 
-    
     try {
       const { error } = await supabaseClient
         .from('leaderboard')
@@ -782,10 +785,7 @@
           reds: numReds,
           hard: hardMode
         }]);
-        
       if (error) throw error;
-      
-      // 提交成功后刷新一下全局最高分
       fetchGlobalHighScore();
     } catch (e) {
       console.error('分数上传失败:', e.message);
@@ -799,7 +799,6 @@
   });
   closeLeaderboardBtn.addEventListener('click', () => leaderboardModal.classList.remove('open'));
   leaderboardModal.addEventListener('click', (e) => { if (e.target === leaderboardModal) leaderboardModal.classList.remove('open'); });
-
 
   /* =====================================================
      游戏主体逻辑
@@ -1132,8 +1131,6 @@
   updateSizeButtons();
   updateRedStepper();
   applyConfig();
-
-  // 页面加载时拉取一次全局最高分
   fetchGlobalHighScore();
 
   if (document.fonts && document.fonts.ready) { document.fonts.ready.then(fitBoard); }
