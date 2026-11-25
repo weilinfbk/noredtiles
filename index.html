@@ -1213,17 +1213,9 @@
     }
 
     let html = '';
-    let prevScore = null, prevCps = null, prevRank = 0;
+    // 名次严格按列表顺序 1、2、3…（同分同 CPS 也各自占一行，避免一片 10）
     leaderboardData.forEach((item, index) => {
-      const itemScore = Number(item.score);
-      const itemCps = Number(item.cps) || 0;
-      let rank;
-      if (prevScore === itemScore && prevCps === itemCps) {
-        rank = prevRank;
-      } else {
-        rank = index + 1;
-      }
-      prevScore = itemScore; prevCps = itemCps; prevRank = rank;
+      const rank = index + 1;
       const hardClass = item.hard ? 'hard' : '';
       const hardText = item.hard ? t('lb.hard') : t('lb.normal');
       const cps = item.cps ? Number(item.cps).toFixed(1) : '0.0';
@@ -1278,6 +1270,7 @@
         .select('*', { count: 'exact' })
         .order('score', { ascending: false })
         .order('cps', { ascending: false })
+        .order('created_at', { ascending: true })
         .limit(LB_LIMIT);
 
       if (error) {
@@ -1288,6 +1281,14 @@
       if (typeof count === 'number') leaderboardTotal = count;
       leaderboardData = data || [];
       leaderboardMessage = null;
+      // 横幅里的名次用「我在列表中的位置」算，保证和行号一致
+      if (myEntry.id) {
+        const myIndex = leaderboardData.findIndex(function (it) { return it.id === myEntry.id; });
+        if (myIndex >= 0) {
+          myEntry.rank = myIndex + 1;
+          if (leaderboardTotal) myEntry.total = leaderboardTotal;
+        }
+      }
       updateRankBanner();
       paintLeaderboard();
     } catch (err) {
@@ -1420,7 +1421,7 @@
     return (res.data && res.data[0]) ? res.data[0] : null;
   }
 
-  async function computeRank(finalScore, finalCps) {
+  async function computeRank(finalScore, finalCps, createdAt) {
     if (!supabaseClient) return { rank: 0, total: 0 };
     try {
       const cps = Number(finalCps) || 0;
@@ -1430,10 +1431,18 @@
       const sameScoreHigherCps = await supabaseClient
         .from('leaderboard').select('id', { count: 'exact', head: true })
         .eq('score', finalScore).gt('cps', cps);
+      // 分数、CPS 都相同时按 created_at 先后排队，名次才唯一
+      let sameScoreSameCpsEarlier = { count: 0 };
+      if (createdAt) {
+        sameScoreSameCpsEarlier = await supabaseClient
+          .from('leaderboard').select('id', { count: 'exact', head: true })
+          .eq('score', finalScore).eq('cps', cps).lt('created_at', createdAt);
+      }
       const all = await supabaseClient
         .from('leaderboard').select('id', { count: 'exact', head: true });
       return {
-        rank: (higherScore.count || 0) + (sameScoreHigherCps.count || 0) + 1,
+        rank: (higherScore.count || 0) + (sameScoreHigherCps.count || 0) +
+              (sameScoreSameCpsEarlier.count || 0) + 1,
         total: all.count || 0
       };
     } catch (e) {
@@ -1450,7 +1459,7 @@
 
     try {
       const row = await insertScore(finalScore, finalCps, name, Math.max(1, Math.round(playedTime || 0)));
-      const pos = await computeRank(finalScore, finalCps);
+      const pos = await computeRank(finalScore, finalCps, row ? row.created_at : null);
       myEntry.id = row ? row.id : null;
       myEntry.name = name;
       if (myEntry.id && hasSecsColumn === false) {
