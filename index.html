@@ -342,6 +342,21 @@
     box-shadow: inset 0 0 0 2px var(--primary);
   }
 
+  .lb-groups {
+    display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 10px;
+  }
+  .lb-chip {
+    flex: 0 0 auto; padding: 6px 12px; border-radius: 999px;
+    border: 1px solid var(--outline); background: transparent;
+    color: var(--on-surface-variant); font: inherit; font-size: 12px; line-height: 1;
+    cursor: pointer; white-space: nowrap;
+  }
+  .lb-chip:hover { background: var(--state-hover); }
+  .lb-chip.active {
+    background: var(--secondary-container); color: var(--on-surface);
+    border-color: transparent; font-weight: 600;
+  }
+
   .lb-banner {
     margin: 0 16px 10px; padding: 10px 14px; border-radius: 14px;
     background: var(--secondary-container); color: var(--on-secondary-container);
@@ -646,6 +661,7 @@
           <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
       </div>
+      <div class="lb-groups" id="lbGroups"></div>
       <div class="lb-banner" id="lbBanner"></div>
       <div class="leaderboard-list" id="leaderboardList"></div>
     </div>
@@ -719,6 +735,8 @@
       'lb.points': '分',
       'lb.reds': '{n}红',
       'lb.secs': '{n}秒',
+      'lb.all': '全部',
+      'lb.group': '{grid} · {reds}红',
       'lb.anonymous': '匿名玩家',
       'name.title': '留下你的名字',
       'name.sub': '本局得分 {score} · {grid} · {mode}',
@@ -780,6 +798,8 @@
       'lb.points': 'pts',
       'lb.reds': '{n} red',
       'lb.secs': '{n}s',
+      'lb.all': 'All',
+      'lb.group': '{grid} · {reds} red',
       'lb.anonymous': 'Anonymous',
       'name.title': 'Leave your name',
       'name.sub': 'Score {score} · {grid} · {mode}',
@@ -1265,13 +1285,15 @@
     }
 
     try {
-      const { data, error, count } = await supabaseClient
+      let lbQuery = supabaseClient
         .from('leaderboard')
         .select('*', { count: 'exact' })
         .order('score', { ascending: false })
         .order('cps', { ascending: false })
-        .order('created_at', { ascending: true })
-        .limit(LB_LIMIT);
+        .order('created_at', { ascending: true });
+      const filter = activeFilter();
+      if (filter) lbQuery = lbQuery.eq('grid', filter.grid).eq('reds', filter.reds);
+      const { data, error, count } = await lbQuery.limit(LB_LIMIT);
 
       if (error) {
         // 把 Supabase 返回的具体错误码展示出来
@@ -1311,6 +1333,7 @@
   const lbBanner = document.getElementById('lbBanner');
 
   const LB_LIMIT = 100;       // 排行榜最多显示 100 人
+  const LB_DEFAULT_GROUP = '4x4|3';   // 默认榜单：标准 4x4 · 3 红
   const NAME_KEY = 'rgj-name';
   const NAME_MAX = 12;
 
@@ -1323,13 +1346,74 @@
   let playerName = '';
   try { playerName = (localStorage.getItem(NAME_KEY) || '').slice(0, NAME_MAX); } catch (e) {}
   let hasNameColumn = null;   // null=还没探测 / true=表里有 name 列 / false=没有
+  const lbGroupsEl = document.getElementById('lbGroups');
+  let groupOptions = [];      // [{key:'4x4|3', grid:'4x4', reds:3}]
+  let activeGroup = LB_DEFAULT_GROUP;
+  try {
+    const savedGroup = localStorage.getItem('rgj-lb-group');
+    if (savedGroup) activeGroup = savedGroup;
+  } catch (e) {}
+
+  function groupKey(grid, reds) { return String(grid) + '|' + String(reds); }
+
+  function activeFilter() {
+    if (activeGroup === 'all') return null;
+    const parts = String(activeGroup).split('|');
+    return { grid: parts[0], reds: Number(parts[1]) };
+  }
+
+  function paintGroupChips() {
+    if (!lbGroupsEl) return;
+    let html = '<button type="button" class="lb-chip' + (activeGroup === 'all' ? ' active' : '') +
+      '" data-group="all">' + escapeHtml(t('lb.all')) + '</button>';
+    groupOptions.forEach(function (g) {
+      const active = g.key === activeGroup;
+      html += '<button type="button" class="lb-chip' + (active ? ' active' : '') +
+        '" data-group="' + escapeHtml(g.key) + '">' +
+        escapeHtml(t('lb.group', { grid: g.grid, reds: g.reds })) + '</button>';
+    });
+    lbGroupsEl.innerHTML = html;
+  }
+
+  async function fetchGroupOptions() {
+    const fallback = [{ key: LB_DEFAULT_GROUP, grid: '4x4', reds: 3 }];
+    if (!supabaseClient) { groupOptions = fallback; paintGroupChips(); return; }
+    try {
+      const { data, error } = await supabaseClient.from('leaderboard').select('grid,reds').limit(1000);
+      if (error) throw error;
+      const seen = {};
+      const list = [];
+      (data || []).forEach(function (it) {
+        if (it.grid == null || it.reds == null) return;
+        const k = groupKey(it.grid, it.reds);
+        if (seen[k]) return;
+        seen[k] = true;
+        list.push({ key: k, grid: String(it.grid), reds: Number(it.reds) });
+      });
+      if (!seen[LB_DEFAULT_GROUP]) list.unshift({ key: LB_DEFAULT_GROUP, grid: '4x4', reds: 3 });
+      list.sort(function (a, b) {
+        const aStd = a.key === LB_DEFAULT_GROUP, bStd = b.key === LB_DEFAULT_GROUP;
+        if (aStd !== bStd) return aStd ? -1 : 1;
+        const ag = parseInt(a.grid, 10) || 0, bg = parseInt(b.grid, 10) || 0;
+        if (ag !== bg) return ag - bg;
+        return a.reds - b.reds;
+      });
+      groupOptions = list;
+    } catch (e) {
+      groupOptions = fallback;
+    }
+    paintGroupChips();
+  }
   let hasSecsColumn = null;   // 同上，探测表里有没有 secs 列（本局秒数）
   let nameResolve = null;
-  let myEntry = { id: null, name: '', score: 0, rank: 0, total: 0, failed: false };
+  let myEntry = { id: null, name: '', score: 0, rank: 0, total: 0, failed: false, grid: '', reds: 0 };
 
   function updateRankBanner() {
     if (!lbBanner) return;
-    if (myEntry.rank > 0) {
+    // 只在本局对应的那个榜单里显示名次
+    const inThisBoard = activeGroup === 'all' ||
+      (!!myEntry.grid && groupKey(myEntry.grid, myEntry.reds) === activeGroup);
+    if (myEntry.rank > 0 && inThisBoard) {
       const total = myEntry.total || leaderboardTotal || 0;
       lbBanner.textContent = t('rank.banner', { rank: myEntry.rank, total: total });
       lbBanner.classList.remove('error');
@@ -1421,25 +1505,25 @@
     return (res.data && res.data[0]) ? res.data[0] : null;
   }
 
-  async function computeRank(finalScore, finalCps, createdAt) {
+  async function computeRank(finalScore, finalCps, createdAt, groupGrid, groupReds) {
     if (!supabaseClient) return { rank: 0, total: 0 };
     try {
       const cps = Number(finalCps) || 0;
-      const higherScore = await supabaseClient
-        .from('leaderboard').select('id', { count: 'exact', head: true })
-        .gt('score', finalScore);
-      const sameScoreHigherCps = await supabaseClient
-        .from('leaderboard').select('id', { count: 'exact', head: true })
-        .eq('score', finalScore).gt('cps', cps);
+      const base = function () {
+        let q = supabaseClient.from('leaderboard').select('id', { count: 'exact', head: true });
+        if (groupGrid != null && groupReds != null) {
+          q = q.eq('grid', groupGrid).eq('reds', groupReds);
+        }
+        return q;
+      };
+      const higherScore = await base().gt('score', finalScore);
+      const sameScoreHigherCps = await base().eq('score', finalScore).gt('cps', cps);
       // 分数、CPS 都相同时按 created_at 先后排队，名次才唯一
       let sameScoreSameCpsEarlier = { count: 0 };
       if (createdAt) {
-        sameScoreSameCpsEarlier = await supabaseClient
-          .from('leaderboard').select('id', { count: 'exact', head: true })
-          .eq('score', finalScore).eq('cps', cps).lt('created_at', createdAt);
+        sameScoreSameCpsEarlier = await base().eq('score', finalScore).eq('cps', cps).lt('created_at', createdAt);
       }
-      const all = await supabaseClient
-        .from('leaderboard').select('id', { count: 'exact', head: true });
+      const all = await base();
       return {
         rank: (higherScore.count || 0) + (sameScoreHigherCps.count || 0) +
               (sameScoreSameCpsEarlier.count || 0) + 1,
@@ -1453,13 +1537,15 @@
   async function recordScore(finalScore, finalCps, playedTime) {
     if (finalScore <= 0 || !supabaseClient) return;
 
-    myEntry = { id: null, name: '', score: finalScore, rank: 0, total: 0, failed: false };
+    const playedGrid = gridSize + 'x' + gridSize;
+    const playedReds = numReds;
+    myEntry = { id: null, name: '', score: finalScore, rank: 0, total: 0, failed: false, grid: playedGrid, reds: playedReds };
     const entered = await promptForName(finalScore);
     const name = (entered || '').trim().slice(0, NAME_MAX);
 
     try {
       const row = await insertScore(finalScore, finalCps, name, Math.max(1, Math.round(playedTime || 0)));
-      const pos = await computeRank(finalScore, finalCps, row ? row.created_at : null);
+      const pos = await computeRank(finalScore, finalCps, row ? row.created_at : null, playedGrid, playedReds);
       myEntry.id = row ? row.id : null;
       myEntry.name = name;
       if (myEntry.id && hasSecsColumn === false) {
@@ -1480,7 +1566,12 @@
       }
       myEntry.rank = pos.rank;
       myEntry.total = pos.total;
+      // 结束后自动切到本局对应的榜单，方便直接看到自己的名次
+      activeGroup = groupKey(playedGrid, playedReds);
+      try { localStorage.setItem('rgj-lb-group', activeGroup); } catch (e) {}
+      paintGroupChips();
       fetchGlobalHighScore();
+      fetchGroupOptions();
     } catch (e) {
       console.error('分数上传失败:', e.message);
       myEntry.failed = true;
@@ -1492,9 +1583,26 @@
 
   function openLeaderboard() {
     Sound.unlock();
+    paintGroupChips();
+    if (!groupOptions.length) fetchGroupOptions();
     updateRankBanner();
     renderLeaderboard();
     leaderboardModal.classList.add('open');
+  }
+
+  if (lbGroupsEl) {
+    lbGroupsEl.addEventListener('click', function (e) {
+      const chip = e.target.closest ? e.target.closest('.lb-chip') : null;
+      if (!chip) return;
+      const next = chip.getAttribute('data-group');
+      if (!next || next === activeGroup) return;
+      activeGroup = next;
+      try { localStorage.setItem('rgj-lb-group', activeGroup); } catch (e) {}
+      paintGroupChips();
+      updateRankBanner();
+      renderLeaderboard();
+      Sound.click(0);
+    });
   }
 
   leaderboardBtn.addEventListener('click', openLeaderboard);
@@ -1863,6 +1971,7 @@
   updateSizeButtons();
   updateRedStepper();
   updateTimeControl();
+  fetchGroupOptions();
   applyLanguage(lang, false);
   applyConfig();
   fetchGlobalHighScore();
