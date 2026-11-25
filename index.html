@@ -718,6 +718,7 @@
       'lb.normal': '标准',
       'lb.points': '分',
       'lb.reds': '{n}红',
+      'lb.secs': '{n}秒',
       'lb.anonymous': '匿名玩家',
       'name.title': '留下你的名字',
       'name.sub': '本局得分 {score} · {grid} · {mode}',
@@ -778,6 +779,7 @@
       'lb.normal': 'Standard',
       'lb.points': 'pts',
       'lb.reds': '{n} red',
+      'lb.secs': '{n}s',
       'lb.anonymous': 'Anonymous',
       'name.title': 'Leave your name',
       'name.sub': 'Score {score} · {grid} · {mode}',
@@ -1175,6 +1177,9 @@
         if (hasNameColumn === null) {
           hasNameColumn = Object.prototype.hasOwnProperty.call(data[0], 'name');
         }
+        if (hasSecsColumn === null) {
+          hasSecsColumn = Object.prototype.hasOwnProperty.call(data[0], 'secs');
+        }
       }
     } catch (e) {}
   }
@@ -1222,6 +1227,12 @@
       const hardClass = item.hard ? 'hard' : '';
       const hardText = item.hard ? t('lb.hard') : t('lb.normal');
       const cps = item.cps ? Number(item.cps).toFixed(1) : '0.0';
+      const rawSecs = (item.secs !== null && item.secs !== undefined) ? item.secs
+        : ((item.id && localSecs[item.id] !== undefined) ? localSecs[item.id] : null);
+      const secsNum = Number(rawSecs);
+      const secsTag = (rawSecs !== null && secsNum > 0)
+        ? '<span class="rank-tag">' + escapeHtml(t('lb.secs', { n: secsNum })) + '</span>'
+        : '';
       const isMe = !!(myEntry.id && item.id === myEntry.id);
       const rawName = (typeof item.name === 'string') ? item.name.trim() : '';
       const localName = (item.id && localNames[item.id]) ? String(localNames[item.id]) : '';
@@ -1240,6 +1251,7 @@
               <span class="rank-tag ${hardClass}">${escapeHtml(hardText)}</span>
               <span class="rank-tag">${escapeHtml(item.grid)}</span>
               <span class="rank-tag">${escapeHtml(t('lb.reds', { n: item.reds }))}</span>
+              ${secsTag}
               <span>${cps} CPS</span>
             </div>
           </div>
@@ -1304,9 +1316,13 @@
   let leaderboardTotal = 0;
   let localNames = {};
   try { localNames = JSON.parse(localStorage.getItem('rgj-names') || '{}') || {}; } catch (e) { localNames = {}; }
+  // 表里还没有 secs 列时，把本机这几局的秒数按记录 id 存在本地，至少自己能看到
+  let localSecs = {};
+  try { localSecs = JSON.parse(localStorage.getItem('rgj-secs') || '{}') || {}; } catch (e) { localSecs = {}; }
   let playerName = '';
   try { playerName = (localStorage.getItem(NAME_KEY) || '').slice(0, NAME_MAX); } catch (e) {}
   let hasNameColumn = null;   // null=还没探测 / true=表里有 name 列 / false=没有
+  let hasSecsColumn = null;   // 同上，探测表里有没有 secs 列（本局秒数）
   let nameResolve = null;
   let myEntry = { id: null, name: '', score: 0, rank: 0, total: 0, failed: false };
 
@@ -1372,7 +1388,7 @@
     if (e.key === 'Escape' && nameModal.classList.contains('open')) finishPrompt('');
   });
 
-  async function insertScore(finalScore, finalCps, name) {
+  async function insertScore(finalScore, finalCps, name, secs) {
     const row = {
       score: finalScore,
       cps: parseFloat(finalCps),
@@ -1381,12 +1397,23 @@
       hard: hardMode
     };
     if (name && hasNameColumn !== false) row.name = name;
+    if (secs && hasSecsColumn !== false) row.secs = secs;
 
     let res = await supabaseClient.from('leaderboard').insert([row]).select();
-    // 表里还没有 name 列时去掉名字重试一次，别让分数丢失
-    if (res.error && res.error.code === 'PGRST204' && row.name) {
-      hasNameColumn = false;
-      delete row.name;
+    // 表里缺少 name / secs 列时，去掉那一列重试，别让分数丢失
+    for (let attempt = 0; attempt < 2 && res.error && res.error.code === 'PGRST204'; attempt++) {
+      const msg = String(res.error.message || '');
+      const m = msg.match(/the '([a-zA-Z_]+)' column/);
+      const missing = m ? m[1] : (row.secs !== undefined ? 'secs' : 'name');
+      if (missing === 'name' && row.name !== undefined) {
+        hasNameColumn = false;
+        delete row.name;
+      } else if (missing === 'secs' && row.secs !== undefined) {
+        hasSecsColumn = false;
+        delete row.secs;
+      } else {
+        break;
+      }
       res = await supabaseClient.from('leaderboard').insert([row]).select();
     }
     if (res.error) throw res.error;
@@ -1422,10 +1449,18 @@
     const name = (entered || '').trim().slice(0, NAME_MAX);
 
     try {
-      const row = await insertScore(finalScore, finalCps, name);
+      const row = await insertScore(finalScore, finalCps, name, Math.max(1, Math.round(playedTime || 0)));
       const pos = await computeRank(finalScore, finalCps);
       myEntry.id = row ? row.id : null;
       myEntry.name = name;
+      if (myEntry.id && hasSecsColumn === false) {
+        localSecs[myEntry.id] = Math.max(1, Math.round(playedTime || 0));
+        try {
+          const ids = Object.keys(localSecs);
+          if (ids.length > 50) { ids.slice(0, ids.length - 50).forEach(function (k) { delete localSecs[k]; }); }
+          localStorage.setItem('rgj-secs', JSON.stringify(localSecs));
+        } catch (e) {}
+      }
       if (name && myEntry.id && hasNameColumn === false) {
         localNames[myEntry.id] = name;
         try {
