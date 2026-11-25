@@ -145,6 +145,9 @@
     letter-spacing: .1px;
     color: var(--on-surface);
     white-space: nowrap;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .actions {
@@ -186,6 +189,10 @@
     background: var(--surface-container);
     box-shadow: var(--elev3); z-index: 40;
     display: flex; flex-direction: column; gap: 16px;
+    max-height: calc(100vh - 72px);
+    max-height: calc(100dvh - 72px);
+    overflow-y: auto; overscroll-behavior: contain;
+    touch-action: pan-y; -webkit-overflow-scrolling: touch;
     transform-origin: top right; opacity: 0; visibility: hidden; pointer-events: none;
     transform: scale(.9) translateY(-8px);
     transition: opacity .14s ease, transform .22s cubic-bezier(.2, 0, 0, 1), visibility .22s;
@@ -236,6 +243,39 @@
   .stepper-btn:disabled { opacity: .32; cursor: not-allowed; }
   .stepper-value { min-width: 48px; text-align: center; font-weight: 700; font-size: 16px; color: var(--on-surface); }
 
+  .stepper-input {
+    width: 78px; padding: 6px 2px; text-align: center;
+    border: none; background: transparent; color: var(--on-surface);
+    font-family: inherit; font-weight: 700; font-size: 16px;
+    font-variant-numeric: tabular-nums;
+    -moz-appearance: textfield; appearance: textfield;
+  }
+  .stepper-input::-webkit-outer-spin-button,
+  .stepper-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .stepper-input:focus { outline: 2px solid var(--primary); outline-offset: 1px; border-radius: 12px; }
+
+  .image-row { display: flex; align-items: center; gap: 12px; }
+  .image-preview {
+    flex: 0 0 auto; width: 56px; height: 56px; border-radius: 14px;
+    background-color: var(--error);
+    background-image: var(--red-image, none);
+    background-size: cover; background-position: center; background-repeat: no-repeat;
+    box-shadow: inset 0 0 0 1px var(--outline-variant);
+  }
+  .image-actions { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .pill-btn {
+    height: 34px; padding: 0 12px; border: 1px solid var(--outline); border-radius: 999px;
+    background: transparent; color: var(--on-surface);
+    font-family: inherit; font-size: 12.5px; font-weight: 500;
+    cursor: pointer; transition: background-color .2s ease, transform .1s ease, opacity .2s ease;
+  }
+  .pill-btn:hover { background: var(--state-hover); }
+  .pill-btn:active { background: var(--state-press); transform: scale(.97); }
+  .pill-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .pill-btn.filled { background: var(--secondary-container); color: var(--on-secondary-container); border-color: transparent; }
+  .pill-btn.filled:hover { background: var(--primary-container); }
+  .image-hint { font-size: 11px; line-height: 1.4; color: var(--on-surface-variant); }
+
   /* ==================== 排行榜弹窗 ==================== */
   .leaderboard-dialog {
     background: var(--surface-container-high);
@@ -264,7 +304,7 @@
   .empty-state { text-align: center; padding: 32px 0; color: var(--on-surface-variant); font-size: 14px; line-height: 1.6; word-break: break-all; }
 
   .rank-item {
-    display: flex; align-items: center; padding: 12px 14px;
+    display: flex; align-items: flex-start; padding: 12px 14px;
     background: var(--surface-container); border-radius: 16px; gap: 12px;
   }
   .rank-item:nth-child(1) { border: 1px solid var(--gold); }
@@ -272,7 +312,7 @@
   .rank-item:nth-child(3) { border: 1px solid var(--bronze); }
 
   .rank-num {
-    width: 24px; text-align: center; font-size: 16px; font-weight: 700;
+    width: 24px; text-align: center; font-size: 16px; font-weight: 700; margin-top: 1px;
     font-variant-numeric: tabular-nums; color: var(--on-surface-variant);
   }
   .rank-item:nth-child(1) .rank-num { color: var(--gold); }
@@ -280,8 +320,7 @@
   .rank-item:nth-child(3) .rank-num { color: var(--bronze); }
 
   .rank-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-  .rank-score-row { display: flex; align-items: baseline; gap: 4px; }
-  .rank-score { font-size: 20px; font-weight: 700; color: var(--primary); font-variant-numeric: tabular-nums; }
+  .rank-score { font-size: 19px; font-weight: 700; color: var(--primary); font-variant-numeric: tabular-nums; margin-left: auto; }
   .rank-unit { font-size: 11px; color: var(--on-surface-variant); }
 
   .rank-meta {
@@ -290,6 +329,51 @@
   }
   .rank-tag { padding: 2px 6px; border-radius: 6px; background: var(--surface-variant); color: var(--on-surface); font-weight: 500; }
   .rank-tag.hard { background: var(--error); color: var(--on-primary); }
+
+  .rank-top { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+  .rank-name {
+    flex: 1; min-width: 0;
+    font-size: 13.5px; font-weight: 700; color: var(--on-surface);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .rank-you { color: var(--primary); font-weight: 700; font-size: 11px; flex: 0 0 auto; }
+  .rank-item.is-me {
+    background: var(--secondary-container);
+    box-shadow: inset 0 0 0 2px var(--primary);
+  }
+
+  .lb-banner {
+    margin: 0 16px 10px; padding: 10px 14px; border-radius: 14px;
+    background: var(--secondary-container); color: var(--on-secondary-container);
+    font-size: 13px; font-weight: 600; display: none;
+  }
+  .lb-banner.show { display: block; }
+  .lb-banner.error { background: var(--surface-variant); color: var(--error); }
+
+  /* ==================== 上榜弹窗（写名字） ==================== */
+  .name-dialog {
+    background: var(--surface-container-high);
+    width: 90%; max-width: 360px;
+    border-radius: 28px; box-shadow: var(--elev3);
+    padding: 24px; display: flex; flex-direction: column; gap: 10px;
+    transform: scale(.9); transition: transform .2s cubic-bezier(.2, 0, 0, 1);
+  }
+  .modal-backdrop.open .name-dialog { transform: scale(1); }
+  .name-title { margin: 0; font-size: 20px; font-weight: 500; color: var(--on-surface); }
+  .name-sub { margin: 0; font-size: 13px; color: var(--on-surface-variant); }
+  .name-input {
+    width: 100%; height: 52px; padding: 0 16px; border-radius: 14px;
+    border: 1px solid var(--outline); background: var(--surface-container);
+    color: var(--on-surface); font-family: inherit; font-size: 16px;
+  }
+  .name-input:focus { outline: 2px solid var(--primary); outline-offset: 1px; border-color: transparent; }
+  .name-input:disabled { opacity: .6; }
+  .name-hint { margin: 0; min-height: 16px; font-size: 11.5px; color: var(--on-surface-variant); }
+  .name-actions { display: flex; gap: 10px; margin-top: 4px; }
+  .name-actions .pill-btn { flex: 1; height: 44px; font-size: 14px; }
+  #saveNameBtn { background: var(--primary); color: var(--on-primary); border-color: transparent; }
+  #saveNameBtn:hover { background: var(--primary); filter: brightness(1.06); }
+  #saveNameBtn:disabled { opacity: .5; filter: none; }
 
   /* ==================== HUD ==================== */
   .hud {
@@ -343,8 +427,13 @@
     transition: background-color .2s ease, border-radius .3s ease; will-change: transform;
   }
 
-  .cell.red { cursor: pointer; background: var(--error); }
-  @media (hover: hover) { .cell.red:hover { background: var(--error-hover); } }
+  .cell.red {
+    cursor: pointer;
+    background-color: var(--error);
+    background-image: var(--red-image, none);
+    background-size: cover; background-position: center; background-repeat: no-repeat;
+  }
+  @media (hover: hover) { .cell.red:hover { background-color: var(--error-hover); } }
 
   .cell.hit { animation: hit .28s cubic-bezier(.2, 0, 0, 1); }
   @keyframes hit { 0% { transform: scale(1); } 35% { transform: scale(.85); } 100% { transform: scale(1); } }
@@ -410,35 +499,43 @@
 
   <div class="app">
     <header class="top-bar">
-      <h1 class="app-title">红色格子跳跃</h1>
+      <h1 class="app-title" data-i18n="app.title">红色格子跳跃</h1>
 
       <div class="actions">
-        <button id="soundBtn" class="icon-btn" aria-label="音效开关" title="音效开关">
+        <button id="soundBtn" class="icon-btn" aria-label="音效开关" title="音效开关" data-i18n-aria="aria.sound">
           <svg id="iconSoundOn" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
           <svg id="iconSoundOff" class="icon-hidden" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M22 9l-5 5M17 9l5 5"/></svg>
         </button>
 
-        <button id="themeBtn" class="icon-btn" aria-label="切换主题" title="切换主题">
+        <button id="themeBtn" class="icon-btn" aria-label="切换主题" title="切换主题" data-i18n-aria="aria.theme">
           <svg id="iconMoon" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
           <svg id="iconSun" class="icon-hidden" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.2v2.2M12 19.6v2.2M4.4 4.4l1.6 1.6M18 18l1.6 1.6M2.2 12h2.2M19.6 12h2.2M4.4 19.6L6 18M18 6l1.6-1.6"/></svg>
         </button>
 
-        <button id="leaderboardBtn" class="icon-btn" aria-label="排行榜" title="全球排行榜">
+        <button id="leaderboardBtn" class="icon-btn" aria-label="全球排行榜" title="全球排行榜" data-i18n-aria="aria.leaderboard">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
             <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
           </svg>
         </button>
 
-        <button id="settingsBtn" class="icon-btn" aria-label="游戏设置" title="游戏设置" aria-haspopup="true" aria-expanded="false">
+        <button id="settingsBtn" class="icon-btn" aria-label="游戏设置" title="游戏设置" aria-haspopup="true" aria-expanded="false" data-i18n-aria="aria.settings">
           <svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor">
             <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
           </svg>
         </button>
 
-        <div class="settings-menu" id="settingsMenu" role="dialog" aria-label="游戏设置">
+        <div class="settings-menu" id="settingsMenu" role="dialog" aria-label="游戏设置" data-i18n-aria="aria.settings">
+          <div class="menu-section">
+            <div class="menu-label" data-i18n="menu.language">语言</div>
+            <div class="size-grid" id="langSegmented" role="radiogroup" aria-label="语言" data-i18n-aria="menu.language">
+              <button type="button" data-lang="zh" role="radio" aria-checked="true" class="selected">中文</button>
+              <button type="button" data-lang="en" role="radio" aria-checked="false">English</button>
+            </div>
+          </div>
+
           <div class="menu-section">
             <div class="switch-row">
-              <span class="switch-desc">困难模式 (点错即输)</span>
+              <span class="switch-desc" data-i18n="menu.hard">困难模式 (点错即输)</span>
               <button type="button" role="switch" id="hardModeSwitch" class="m3-switch" aria-checked="false">
                 <span class="switch-thumb"></span>
               </button>
@@ -446,8 +543,8 @@
           </div>
 
           <div class="menu-section">
-            <div class="menu-label">网格大小</div>
-            <div class="size-grid" id="sizeSegmented" role="radiogroup" aria-label="网格大小">
+            <div class="menu-label" data-i18n="menu.gridSize">网格大小</div>
+            <div class="size-grid" id="sizeSegmented" role="radiogroup" aria-label="网格大小" data-i18n-aria="menu.gridSize">
               <button type="button" data-size="2" role="radio" aria-checked="false">2×2</button>
               <button type="button" data-size="4" role="radio" aria-checked="true" class="selected">4×4</button>
               <button type="button" data-size="6" role="radio" aria-checked="false">6×6</button>
@@ -456,12 +553,34 @@
           </div>
 
           <div class="menu-section">
-            <div class="menu-label">红格子数量</div>
+            <div class="menu-label" data-i18n="menu.redCount">红格子数量</div>
             <div class="menu-stepper">
-              <button type="button" class="stepper-btn" id="redMinus" aria-label="减少红格子">−</button>
+              <button type="button" class="stepper-btn" id="redMinus" aria-label="减少红格子" data-i18n-aria="aria.redMinus">−</button>
               <span class="stepper-value" id="redValue">3</span>
-              <button type="button" class="stepper-btn" id="redPlus" aria-label="增加红格子">+</button>
+              <button type="button" class="stepper-btn" id="redPlus" aria-label="增加红格子" data-i18n-aria="aria.redPlus">+</button>
             </div>
+          </div>
+
+          <div class="menu-section">
+            <div class="menu-label" data-i18n="menu.duration">游戏时长 (秒)</div>
+            <div class="menu-stepper">
+              <button type="button" class="stepper-btn" id="timeMinus" aria-label="减少时长" data-i18n-aria="aria.timeMinus">−</button>
+              <input type="number" class="stepper-input" id="timeValue" min="5" max="600" step="5" inputmode="numeric" value="30" aria-label="游戏时长 (秒)" data-i18n-aria="menu.duration">
+              <button type="button" class="stepper-btn" id="timePlus" aria-label="增加时长" data-i18n-aria="aria.timePlus">+</button>
+            </div>
+          </div>
+
+          <div class="menu-section">
+            <div class="menu-label" data-i18n="menu.redImage">红格子图片</div>
+            <div class="image-row">
+              <div class="image-preview" id="imagePreview"></div>
+              <div class="image-actions">
+                <button type="button" class="pill-btn filled" id="pickImageBtn" data-i18n="menu.imagePick">选择图片</button>
+                <button type="button" class="pill-btn" id="resetImageBtn" data-i18n="menu.imageReset">恢复默认</button>
+              </div>
+            </div>
+            <div class="image-hint" data-i18n="menu.imageHint">支持 JPG / PNG / GIF / WEBP</div>
+            <input type="file" id="imageInput" accept="image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp" hidden>
           </div>
         </div>
       </div>
@@ -470,21 +589,21 @@
     <div class="hud">
       <div class="hud-stat primary">
         <span class="hud-value" id="score">0</span>
-        <span class="hud-label" id="scoreLabel">得分 <span id="hardModeDot" class="hard-dot" style="display:none;"></span></span>
+        <span class="hud-label" id="scoreLabel"><span data-i18n="hud.score">得分</span> <span id="hardModeDot" class="hard-dot" style="display:none;"></span></span>
       </div>
       <div class="hud-divider" aria-hidden="true"></div>
       <div class="hud-stat secondary">
         <span class="hud-value" id="highScore">0</span>
-        <span class="hud-label">最高</span>
+        <span class="hud-label" data-i18n="hud.high">最高</span>
       </div>
       <div class="hud-stat secondary">
         <span class="hud-value" id="cps">0.0</span>
-        <span class="hud-label">速度</span>
+        <span class="hud-label" data-i18n="hud.cps">速度</span>
       </div>
       <div class="hud-divider" aria-hidden="true"></div>
       <div class="hud-stat primary">
         <span class="hud-value" id="timer">30</span>
-        <span class="hud-label">秒</span>
+        <span class="hud-label" data-i18n="hud.seconds">秒</span>
       </div>
       <div class="hud-progress"><div class="hud-progress-bar" id="progressBar"></div></div>
     </div>
@@ -503,15 +622,31 @@
 
   <div class="menu-backdrop" id="menuBackdrop"></div>
 
+  <!-- 上榜弹窗：写名字 -->
+  <div class="modal-backdrop" id="nameModal" role="dialog" aria-modal="true" aria-labelledby="nameTitle">
+    <div class="name-dialog">
+      <h2 class="name-title" id="nameTitle" data-i18n="name.title">留下你的名字</h2>
+      <p class="name-sub" id="nameSub"></p>
+      <input id="nameInput" class="name-input" type="text" maxlength="12" autocomplete="nickname"
+             placeholder="名字（最多 12 字）" data-i18n-ph="name.placeholder">
+      <p class="name-hint" id="nameHint" data-i18n="name.hint">名字会显示在全球排行榜上</p>
+      <div class="name-actions">
+        <button id="skipNameBtn" class="pill-btn" data-i18n="name.skip">跳过</button>
+        <button id="saveNameBtn" class="pill-btn filled" data-i18n="name.save">上榜</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 排行榜弹窗 -->
   <div class="modal-backdrop" id="leaderboardModal" role="dialog" aria-modal="true" aria-labelledby="lbTitle">
     <div class="leaderboard-dialog">
       <div class="dialog-header">
-        <h2 class="dialog-title" id="lbTitle">全球排行榜 Top 10</h2>
-        <button class="close-btn" id="closeLeaderboard" aria-label="关闭排行榜">
+        <h2 class="dialog-title" id="lbTitle" data-i18n="lb.title">全球排行榜 · Top 100</h2>
+        <button class="close-btn" id="closeLeaderboard" aria-label="关闭排行榜" data-i18n-aria="lb.close">
           <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
       </div>
+      <div class="lb-banner" id="lbBanner"></div>
       <div class="leaderboard-list" id="leaderboardList"></div>
     </div>
   </div>
@@ -530,6 +665,182 @@
     }
   } catch(e) {
     console.error('Supabase 初始化失败', e);
+  }
+
+  /* =====================================================
+     多语言 (中文 / English)
+     ===================================================== */
+  const I18N = {
+    zh: {
+      'app.title': '红色格子跳跃',
+      'aria.sound': '音效开关',
+      'aria.theme': '切换主题',
+      'aria.leaderboard': '全球排行榜',
+      'aria.settings': '游戏设置',
+      'menu.language': '语言',
+      'menu.hard': '困难模式 (点错即输)',
+      'menu.gridSize': '网格大小',
+      'menu.redCount': '红格子数量',
+      'menu.duration': '游戏时长 (秒)',
+      'menu.redImage': '红格子图片',
+      'menu.imagePick': '选择图片',
+      'menu.imageReset': '恢复默认',
+      'menu.imageHint': '支持 JPG / PNG / GIF / WEBP',
+      'aria.redMinus': '减少红格子',
+      'aria.redPlus': '增加红格子',
+      'aria.timeMinus': '减少时长',
+      'aria.timePlus': '增加时长',
+      'hud.score': '得分',
+      'hud.high': '最高',
+      'hud.cps': '速度',
+      'hud.seconds': '秒',
+      'btn.start': '开始游戏',
+      'btn.restart': '重新开始',
+      'btn.again': '再来一局',
+      'status.hardOn': '困难模式已开启：点错即输',
+      'status.hardOff': '已切回标准模式',
+      'status.configChanged': '配置已更新，请重新开始',
+      'status.timeUp': '时间到！本局得分 {score}',
+      'status.failed': '踩到空格！本局得分 {score}',
+      'status.imageLoaded': '自定义图片已应用',
+      'status.imageReset': '已恢复默认红格子',
+      'status.imageTooBig': '图片太大了，请选择小于 {size}MB 的图片',
+      'status.imageUnsupported': '不支持的图片格式',
+      'status.imageSaveFailed': '图片已应用，但存储空间不足，刷新后会失效',
+      'lb.title': '全球排行榜 · Top 100',
+      'lb.close': '关闭排行榜',
+      'lb.loading': '正在加载全网数据...',
+      'lb.noClient': '无法连接排行榜服务器(初始化失败)',
+      'lb.empty': '暂无记录，快去成为世界第一吧！',
+      'lb.failed': '加载失败：',
+      'lb.errorDetail': '网络连接超时，请尝试挂梯子后重试。',
+      'lb.hard': '困难',
+      'lb.normal': '标准',
+      'lb.points': '分',
+      'lb.reds': '{n}红',
+      'lb.anonymous': '匿名玩家',
+      'name.title': '留下你的名字',
+      'name.sub': '本局得分 {score} · {grid} · {mode}',
+      'name.placeholder': '名字（最多 12 字）',
+      'name.hint': '名字会显示在全球排行榜上，下次自动记住',
+      'name.hintLocal': '云端表格还没有 name 列，名字暂时只在本机显示',
+      'name.skip': '跳过',
+      'name.save': '上榜',
+      'name.saving': '正在上榜…',
+      'name.failed': '上榜失败，请稍后重试',
+      'rank.banner': '你排第 {rank} 名 · 共 {total} 人',
+      'rank.you': '你'
+    },
+    en: {
+      'app.title': 'Red Grid Jump',
+      'aria.sound': 'Toggle sound',
+      'aria.theme': 'Toggle theme',
+      'aria.leaderboard': 'Global leaderboard',
+      'aria.settings': 'Game settings',
+      'menu.language': 'Language',
+      'menu.hard': 'Hard mode (wrong tap = end)',
+      'menu.gridSize': 'Grid size',
+      'menu.redCount': 'Red cells',
+      'menu.duration': 'Game time (seconds)',
+      'menu.redImage': 'Red cell image',
+      'menu.imagePick': 'Choose image',
+      'menu.imageReset': 'Reset',
+      'menu.imageHint': 'JPG / PNG / GIF / WEBP supported',
+      'aria.redMinus': 'Fewer red cells',
+      'aria.redPlus': 'More red cells',
+      'aria.timeMinus': 'Less time',
+      'aria.timePlus': 'More time',
+      'hud.score': 'Score',
+      'hud.high': 'Best',
+      'hud.cps': 'Speed',
+      'hud.seconds': 'sec',
+      'btn.start': 'Start game',
+      'btn.restart': 'Restart',
+      'btn.again': 'Play again',
+      'status.hardOn': 'Hard mode on: one miss ends the run',
+      'status.hardOff': 'Back to standard mode',
+      'status.configChanged': 'Settings updated — please restart',
+      'status.timeUp': "Time's up! Score: {score}",
+      'status.failed': 'Wrong cell! Score: {score}',
+      'status.imageLoaded': 'Custom image applied',
+      'status.imageReset': 'Default red cells restored',
+      'status.imageTooBig': 'Image too large — please choose one under {size}MB',
+      'status.imageUnsupported': 'Unsupported image format',
+      'status.imageSaveFailed': 'Image applied, but storage is full — it will reset after refresh',
+      'lb.title': 'Global Leaderboard · Top 100',
+      'lb.close': 'Close leaderboard',
+      'lb.loading': 'Loading global data...',
+      'lb.noClient': 'Cannot reach the leaderboard server (init failed)',
+      'lb.empty': 'No records yet — be the first!',
+      'lb.failed': 'Failed to load: ',
+      'lb.errorDetail': 'Network timeout. Please try again.',
+      'lb.hard': 'Hard',
+      'lb.normal': 'Standard',
+      'lb.points': 'pts',
+      'lb.reds': '{n} red',
+      'lb.anonymous': 'Anonymous',
+      'name.title': 'Leave your name',
+      'name.sub': 'Score {score} · {grid} · {mode}',
+      'name.placeholder': 'Your name (max 12)',
+      'name.hint': 'Shown on the global leaderboard, remembered next time',
+      'name.hintLocal': 'The cloud table has no name column yet — name is stored on this device only',
+      'name.skip': 'Skip',
+      'name.save': 'Submit',
+      'name.saving': 'Submitting…',
+      'name.failed': 'Upload failed, please try again',
+      'rank.banner': 'You are #{rank} of {total}',
+      'rank.you': 'You'
+    }
+  };
+
+  let lang = 'zh';
+  try {
+    const savedLang = localStorage.getItem('rgj-lang');
+    if (savedLang === 'zh' || savedLang === 'en') lang = savedLang;
+  } catch (e) {}
+
+  function t(key, params) {
+    const dict = I18N[lang] || I18N.zh;
+    let str = dict[key];
+    if (typeof str !== 'string') str = I18N.zh[key];
+    if (typeof str !== 'string') str = key;
+    if (params) {
+      Object.keys(params).forEach(function (k) {
+        str = str.split('{' + k + '}').join(String(params[k]));
+      });
+    }
+    return str;
+  }
+
+  let startLabelKey = 'btn.start';
+
+  function applyLanguage(next, persist) {
+    lang = (next === 'en') ? 'en' : 'zh';
+    document.documentElement.lang = (lang === 'en') ? 'en' : 'zh-CN';
+    document.title = t('app.title');
+
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      el.textContent = t(el.getAttribute('data-i18n'));
+    });
+    document.querySelectorAll('[data-i18n-aria]').forEach(function (el) {
+      const text = t(el.getAttribute('data-i18n-aria'));
+      el.setAttribute('aria-label', text);
+      if (el.hasAttribute('title')) el.setAttribute('title', text);
+    });
+    document.querySelectorAll('[data-i18n-ph]').forEach(function (el) {
+      el.setAttribute('placeholder', t(el.getAttribute('data-i18n-ph')));
+    });
+    document.querySelectorAll('#langSegmented button').forEach(function (btn) {
+      const sel = btn.getAttribute('data-lang') === lang;
+      btn.classList.toggle('selected', sel);
+      btn.setAttribute('aria-checked', sel ? 'true' : 'false');
+    });
+
+    if (typeof setStartLabel === 'function') setStartLabel(startLabelKey);
+    if (typeof renderStatus === 'function') renderStatus();
+    if (typeof paintLeaderboard === 'function') paintLeaderboard();
+
+    if (persist) { try { localStorage.setItem('rgj-lang', lang); } catch (e) {} }
   }
 
   /* =====================================================
@@ -664,15 +975,170 @@
     hardMode = !hardMode;
     try { localStorage.setItem('rgj-hardmode', hardMode ? '1' : '0'); } catch(e) {}
     updateHardModeUI();
-    applyConfig();
-    statusEl.textContent = hardMode ? '困难模式已开启：点错即输' : '已切回标准模式';
-    statusEl.style.color = hardMode ? 'var(--error)' : 'var(--on-surface-variant)';
-    setTimeout(() => {
-      if (statusEl.textContent === (hardMode ? '困难模式已开启：点错即输' : '已切回标准模式')) {
-        statusEl.textContent = ''; statusEl.style.color = '';
-      }
-    }, 2500);
+    setStatus(hardMode ? 'status.hardOn' : 'status.hardOff', {
+      color: hardMode ? 'var(--error)' : '',
+      timeout: 2500
+    });
   });
+
+  /* ---------- 语言切换 ---------- */
+  const langSegmented = document.getElementById('langSegmented');
+  langSegmented.querySelectorAll('button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      Sound.unlock();
+      if (btn.dataset.lang === lang) return;
+      applyLanguage(btn.dataset.lang, true);
+      Sound.click(0);
+    });
+  });
+
+  /* ---------- 游戏时长 ---------- */
+  const TIME_MIN = 5;
+  const TIME_MAX = 600;
+  let gameTime = 30;
+  try {
+    const savedTime = parseInt(localStorage.getItem('rgj-duration'), 10);
+    if (savedTime >= TIME_MIN && savedTime <= TIME_MAX) gameTime = savedTime;
+  } catch (e) {}
+
+  const timeMinus = document.getElementById('timeMinus');
+  const timePlus  = document.getElementById('timePlus');
+  const timeValue = document.getElementById('timeValue');
+
+  function updateTimeControl() {
+    timeValue.value = gameTime;
+    timeMinus.disabled = gameTime <= TIME_MIN;
+    timePlus.disabled  = gameTime >= TIME_MAX;
+  }
+
+  function setGameTime(value) {
+    const raw = String(value == null ? '' : value).trim();
+    let next = raw === '' ? gameTime : Math.round(Number(raw));
+    if (!isFinite(next)) next = gameTime;
+    next = Math.max(TIME_MIN, Math.min(TIME_MAX, next));
+    if (next === gameTime) { updateTimeControl(); return; }
+    gameTime = next;
+    try { localStorage.setItem('rgj-duration', String(gameTime)); } catch (e) {}
+    updateTimeControl();
+    applyConfig();
+  }
+
+  timeMinus.addEventListener('click', () => { Sound.unlock(); setGameTime(gameTime - 5); });
+  timePlus.addEventListener('click', () => { Sound.unlock(); setGameTime(gameTime + 5); });
+  timeValue.addEventListener('change', () => setGameTime(timeValue.value));
+
+  /* ---------- 红格子自定义图片 ---------- */
+  const IMAGE_MAX_MB = 8;
+  const IMAGE_MAX_BYTES = IMAGE_MAX_MB * 1024 * 1024;
+  const IMAGE_KEY = 'rgj-red-image';
+  const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  const IMAGE_EXT = /\.(jpe?g|png|gif|webp)$/i;
+
+  let redImageData = '';
+  try {
+    const savedImage = localStorage.getItem(IMAGE_KEY);
+    if (savedImage && savedImage.indexOf('data:image/') === 0) redImageData = savedImage;
+  } catch (e) {}
+
+  const pickImageBtn  = document.getElementById('pickImageBtn');
+  const resetImageBtn = document.getElementById('resetImageBtn');
+  const imageInput    = document.getElementById('imageInput');
+
+  function applyRedImage() {
+    if (redImageData) {
+      document.documentElement.style.setProperty('--red-image', 'url("' + redImageData + '")');
+    } else {
+      document.documentElement.style.removeProperty('--red-image');
+    }
+    resetImageBtn.disabled = !redImageData;
+  }
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function downscaleImage(src, maxSide) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const scale = Math.min(1, maxSide / Math.max(img.width || 1, img.height || 1));
+          const w = Math.max(1, Math.round((img.width || 1) * scale));
+          const h = Math.max(1, Math.round((img.height || 1) * scale));
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) { reject(new Error('no canvas')); return; }
+          ctx.clearRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          let out = canvas.toDataURL('image/webp', 0.9);
+          if (out.indexOf('data:image/webp') !== 0) out = canvas.toDataURL('image/png');
+          resolve(out);
+        } catch (err) { reject(err); }
+      };
+      img.onerror = () => reject(new Error('image decode failed'));
+      img.src = src;
+    });
+  }
+
+  function saveRedImage(dataUrl) {
+    redImageData = dataUrl;
+    applyRedImage();
+    let saved = true;
+    try { localStorage.setItem(IMAGE_KEY, dataUrl); } catch (e) { saved = false; }
+    if (!saved) {
+      try { localStorage.removeItem(IMAGE_KEY); } catch (e) {}
+      setStatus('status.imageSaveFailed', { timeout: 3200 });
+    } else {
+      setStatus('status.imageLoaded', { timeout: 2400 });
+    }
+  }
+
+  function handleImageFile(file) {
+    if (!file) return;
+    const typeOk = IMAGE_TYPES.indexOf(file.type) >= 0 || IMAGE_EXT.test(file.name || '');
+    if (!typeOk) { setStatus('status.imageUnsupported', { timeout: 2600 }); return; }
+    if (file.size > IMAGE_MAX_BYTES) {
+      setStatus('status.imageTooBig', { params: { size: IMAGE_MAX_MB }, timeout: 3000 });
+      return;
+    }
+    const isGif = file.type === 'image/gif' || /\.gif$/i.test(file.name || '');
+    const reader = new FileReader();
+    reader.onerror = () => setStatus('status.imageUnsupported', { timeout: 2600 });
+    reader.onload = () => {
+      const raw = String(reader.result || '');
+      if (!raw || raw.indexOf('data:image/') !== 0) {
+        setStatus('status.imageUnsupported', { timeout: 2600 });
+        return;
+      }
+      // GIF 需要保留动画，不能走 canvas 缩放；其余格式缩到 320px 以节省存储空间
+      if (isGif) { saveRedImage(raw); return; }
+      downscaleImage(raw, 320).then(saveRedImage).catch(function () { saveRedImage(raw); });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  pickImageBtn.addEventListener('click', () => {
+    Sound.unlock();
+    try { imageInput.value = ''; } catch (e) {}
+    imageInput.click();
+  });
+  imageInput.addEventListener('change', () => {
+    const file = imageInput.files && imageInput.files[0];
+    handleImageFile(file);
+    try { imageInput.value = ''; } catch (e) {}
+  });
+  resetImageBtn.addEventListener('click', () => {
+    Sound.unlock();
+    if (!redImageData) return;
+    redImageData = '';
+    applyRedImage();
+    try { localStorage.removeItem(IMAGE_KEY); } catch (e) {}
+    setStatus('status.imageReset', { timeout: 2400 });
+  });
+  applyRedImage();
 
   function openMenu() {
     settingsMenu.classList.add('open'); menuBackdrop.classList.add('open');
@@ -699,111 +1165,301 @@
     try {
       const { data, error } = await supabaseClient
         .from('leaderboard')
-        .select('score')
+        .select('*')
         .order('score', { ascending: false })
         .limit(1);
-      
+
       if (!error && data && data.length > 0) {
         highScoreEl.textContent = data[0].score;
+        // 顺便探测表里有没有 name 列（有就全员显示名字）
+        if (hasNameColumn === null) {
+          hasNameColumn = Object.prototype.hasOwnProperty.call(data[0], 'name');
+        }
       }
     } catch (e) {}
   }
 
+  let leaderboardData = null;
+  let leaderboardMessage = null; // { key, detail }
+
+  function showLeaderboardMessage(key, detail) {
+    leaderboardData = null;
+    leaderboardMessage = { key: key, detail: detail || '' };
+    paintLeaderboard();
+  }
+
+  function paintLeaderboard() {
+    if (!leaderboardListEl) return;
+    if (leaderboardMessage) {
+      if (leaderboardMessage.key === 'lb.failed') {
+        leaderboardListEl.innerHTML =
+          '<div class="empty-state"><span style="color:var(--error);font-weight:700;">' +
+          escapeHtml(t('lb.failed')) + '</span><br>' +
+          escapeHtml(leaderboardMessage.detail) + '</div>';
+      } else {
+        leaderboardListEl.innerHTML = '<div class="empty-state">' + escapeHtml(t(leaderboardMessage.key)) + '</div>';
+      }
+      return;
+    }
+    if (!leaderboardData) return;
+    if (leaderboardData.length === 0) {
+      leaderboardListEl.innerHTML = '<div class="empty-state">' + escapeHtml(t('lb.empty')) + '</div>';
+      return;
+    }
+
+    let html = '';
+    let prevScore = null, prevCps = null, prevRank = 0;
+    leaderboardData.forEach((item, index) => {
+      const itemScore = Number(item.score);
+      const itemCps = Number(item.cps) || 0;
+      let rank;
+      if (prevScore === itemScore && prevCps === itemCps) {
+        rank = prevRank;
+      } else {
+        rank = index + 1;
+      }
+      prevScore = itemScore; prevCps = itemCps; prevRank = rank;
+      const hardClass = item.hard ? 'hard' : '';
+      const hardText = item.hard ? t('lb.hard') : t('lb.normal');
+      const cps = item.cps ? Number(item.cps).toFixed(1) : '0.0';
+      const isMe = !!(myEntry.id && item.id === myEntry.id);
+      const rawName = (typeof item.name === 'string') ? item.name.trim() : '';
+      const localName = (item.id && localNames[item.id]) ? String(localNames[item.id]) : '';
+      const shownName = rawName || localName || t('lb.anonymous');
+
+      html += `
+        <div class="rank-item${isMe ? ' is-me' : ''}">
+          <div class="rank-num">${rank}</div>
+          <div class="rank-info">
+            <div class="rank-top">
+              <span class="rank-name">${escapeHtml(shownName)}</span>${isMe ? '<span class="rank-you">' + escapeHtml(t('rank.you')) + '</span>' : ''}
+              <span class="rank-score">${escapeHtml(item.score)}</span>
+              <span class="rank-unit">${escapeHtml(t('lb.points'))}</span>
+            </div>
+            <div class="rank-meta">
+              <span class="rank-tag ${hardClass}">${escapeHtml(hardText)}</span>
+              <span class="rank-tag">${escapeHtml(item.grid)}</span>
+              <span class="rank-tag">${escapeHtml(t('lb.reds', { n: item.reds }))}</span>
+              <span>${cps} CPS</span>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    leaderboardListEl.innerHTML = html;
+
+    const meRow = leaderboardListEl.querySelector('.rank-item.is-me');
+    if (meRow) { try { meRow.scrollIntoView({ block: 'center' }); } catch (e) {} }
+  }
+
   async function renderLeaderboard() {
-    leaderboardListEl.innerHTML = '<div class="empty-state">正在加载全网数据...</div>';
-    
+    showLeaderboardMessage('lb.loading');
+
     if (!supabaseClient) {
-      leaderboardListEl.innerHTML = '<div class="empty-state">无法连接排行榜服务器(初始化失败)</div>';
+      showLeaderboardMessage('lb.noClient');
       return;
     }
 
     try {
-      const { data, error } = await supabaseClient
+      const { data, error, count } = await supabaseClient
         .from('leaderboard')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('score', { ascending: false })
         .order('cps', { ascending: false })
-        .limit(10);
+        .limit(LB_LIMIT);
 
       if (error) {
         // 把 Supabase 返回的具体错误码展示出来
         throw new Error(`${error.message} (${error.code || ''})`);
       }
 
-      if (!data || data.length === 0) {
-        leaderboardListEl.innerHTML = '<div class="empty-state">暂无记录，快去成为世界第一吧！</div>';
-        return;
-      }
-
-      let html = '';
-      data.forEach((item, index) => {
-        const rank = index + 1;
-        const hardClass = item.hard ? 'hard' : '';
-        const hardText = item.hard ? '困难' : '标准';
-        const cps = item.cps ? item.cps.toFixed(1) : '0.0';
-        
-        html += `
-          <div class="rank-item">
-            <div class="rank-num">${rank}</div>
-            <div class="rank-info">
-              <div class="rank-score-row">
-                <span class="rank-score">${item.score}</span>
-                <span class="rank-unit">分</span>
-              </div>
-              <div class="rank-meta">
-                <span class="rank-tag ${hardClass}">${hardText}</span>
-                <span class="rank-tag">${item.grid}</span>
-                <span class="rank-tag">${item.reds}红</span>
-                <span>${cps} CPS</span>
-              </div>
-            </div>
-          </div>
-        `;
-      });
-      leaderboardListEl.innerHTML = html;
+      if (typeof count === 'number') leaderboardTotal = count;
+      leaderboardData = data || [];
+      leaderboardMessage = null;
+      updateRankBanner();
+      paintLeaderboard();
     } catch (err) {
       console.error(err);
-      // 显示具体的错误消息
-      leaderboardListEl.innerHTML = `
-        <div class="empty-state">
-          <span style="color:var(--error);font-weight:700;">加载失败：</span><br>
-          ${err.message || '网络连接超时，请尝试挂梯子后重试。'}
-        </div>
-      `;
+      leaderboardData = null;
+      leaderboardMessage = { key: 'lb.failed', detail: err.message || t('lb.errorDetail') };
+      paintLeaderboard();
+    }
+  }
+
+  /* =====================================================
+     上榜：写名字 → 提交分数 → 打开排行榜看自己的排名
+     ===================================================== */
+  const nameModal = document.getElementById('nameModal');
+  const nameInput = document.getElementById('nameInput');
+  const nameSub = document.getElementById('nameSub');
+  const nameHint = document.getElementById('nameHint');
+  const saveNameBtn = document.getElementById('saveNameBtn');
+  const skipNameBtn = document.getElementById('skipNameBtn');
+  const lbBanner = document.getElementById('lbBanner');
+
+  const LB_LIMIT = 100;       // 排行榜最多显示 100 人
+  const NAME_KEY = 'rgj-name';
+  const NAME_MAX = 12;
+
+  let leaderboardTotal = 0;
+  let localNames = {};
+  try { localNames = JSON.parse(localStorage.getItem('rgj-names') || '{}') || {}; } catch (e) { localNames = {}; }
+  let playerName = '';
+  try { playerName = (localStorage.getItem(NAME_KEY) || '').slice(0, NAME_MAX); } catch (e) {}
+  let hasNameColumn = null;   // null=还没探测 / true=表里有 name 列 / false=没有
+  let nameResolve = null;
+  let myEntry = { id: null, name: '', score: 0, rank: 0, total: 0, failed: false };
+
+  function updateRankBanner() {
+    if (!lbBanner) return;
+    if (myEntry.rank > 0) {
+      const total = myEntry.total || leaderboardTotal || 0;
+      lbBanner.textContent = t('rank.banner', { rank: myEntry.rank, total: total });
+      lbBanner.classList.remove('error');
+      lbBanner.classList.add('show');
+    } else if (myEntry.failed) {
+      lbBanner.textContent = t('name.failed');
+      lbBanner.classList.add('show', 'error');
+    } else {
+      lbBanner.classList.remove('show');
+      lbBanner.textContent = '';
+    }
+  }
+
+  function promptForName(finalScore) {
+    nameSub.textContent = t('name.sub', {
+      score: finalScore,
+      grid: gridSize + 'x' + gridSize,
+      mode: hardMode ? t('lb.hard') : t('lb.normal')
+    });
+    nameHint.textContent = (hasNameColumn === false) ? t('name.hintLocal') : t('name.hint');
+    nameInput.value = playerName;
+    nameInput.disabled = false;
+    saveNameBtn.textContent = t('name.save');
+    skipNameBtn.textContent = t('name.skip');
+    saveNameBtn.disabled = false;
+    skipNameBtn.disabled = false;
+    nameModal.classList.add('open');
+    setTimeout(function () { try { nameInput.focus(); nameInput.select(); } catch (e) {} }, 150);
+    return new Promise(function (resolve) { nameResolve = resolve; });
+  }
+
+  function finishPrompt(value) {
+    if (!nameResolve) return;
+    nameInput.disabled = true;
+    saveNameBtn.disabled = true;
+    skipNameBtn.disabled = true;
+    nameHint.textContent = t('name.saving');
+    const resolve = nameResolve;
+    nameResolve = null;
+    resolve(value);
+  }
+
+  saveNameBtn.addEventListener('click', function () {
+    const value = (nameInput.value || '').trim().slice(0, NAME_MAX);
+    if (value) {
+      playerName = value;
+      try { localStorage.setItem(NAME_KEY, value); } catch (e) {}
+    }
+    Sound.click(0);
+    finishPrompt(value);
+  });
+  skipNameBtn.addEventListener('click', function () { Sound.click(0); finishPrompt(''); });
+  nameInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); saveNameBtn.click(); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && nameModal.classList.contains('open')) finishPrompt('');
+  });
+
+  async function insertScore(finalScore, finalCps, name) {
+    const row = {
+      score: finalScore,
+      cps: parseFloat(finalCps),
+      grid: gridSize + 'x' + gridSize,
+      reds: numReds,
+      hard: hardMode
+    };
+    if (name && hasNameColumn !== false) row.name = name;
+
+    let res = await supabaseClient.from('leaderboard').insert([row]).select();
+    // 表里还没有 name 列时去掉名字重试一次，别让分数丢失
+    if (res.error && res.error.code === 'PGRST204' && row.name) {
+      hasNameColumn = false;
+      delete row.name;
+      res = await supabaseClient.from('leaderboard').insert([row]).select();
+    }
+    if (res.error) throw res.error;
+    return (res.data && res.data[0]) ? res.data[0] : null;
+  }
+
+  async function computeRank(finalScore, finalCps) {
+    if (!supabaseClient) return { rank: 0, total: 0 };
+    try {
+      const cps = Number(finalCps) || 0;
+      const higherScore = await supabaseClient
+        .from('leaderboard').select('id', { count: 'exact', head: true })
+        .gt('score', finalScore);
+      const sameScoreHigherCps = await supabaseClient
+        .from('leaderboard').select('id', { count: 'exact', head: true })
+        .eq('score', finalScore).gt('cps', cps);
+      const all = await supabaseClient
+        .from('leaderboard').select('id', { count: 'exact', head: true });
+      return {
+        rank: (higherScore.count || 0) + (sameScoreHigherCps.count || 0) + 1,
+        total: all.count || 0
+      };
+    } catch (e) {
+      return { rank: 0, total: 0 };
     }
   }
 
   async function recordScore(finalScore, finalCps, playedTime) {
-    if (finalScore <= 0 || !supabaseClient) return; 
+    if (finalScore <= 0 || !supabaseClient) return;
+
+    myEntry = { id: null, name: '', score: finalScore, rank: 0, total: 0, failed: false };
+    const entered = await promptForName(finalScore);
+    const name = (entered || '').trim().slice(0, NAME_MAX);
+
     try {
-      const { error } = await supabaseClient
-        .from('leaderboard')
-        .insert([{
-          score: finalScore,
-          cps: parseFloat(finalCps),
-          grid: `${gridSize}x${gridSize}`,
-          reds: numReds,
-          hard: hardMode
-        }]);
-      if (error) throw error;
+      const row = await insertScore(finalScore, finalCps, name);
+      const pos = await computeRank(finalScore, finalCps);
+      myEntry.id = row ? row.id : null;
+      myEntry.name = name;
+      if (name && myEntry.id && hasNameColumn === false) {
+        localNames[myEntry.id] = name;
+        try {
+          const ids = Object.keys(localNames);
+          if (ids.length > 50) { ids.slice(0, ids.length - 50).forEach(function (k) { delete localNames[k]; }); }
+          localStorage.setItem('rgj-names', JSON.stringify(localNames));
+        } catch (e) {}
+      }
+      myEntry.rank = pos.rank;
+      myEntry.total = pos.total;
       fetchGlobalHighScore();
     } catch (e) {
       console.error('分数上传失败:', e.message);
+      myEntry.failed = true;
     }
+
+    nameModal.classList.remove('open');
+    openLeaderboard();
   }
 
-  leaderboardBtn.addEventListener('click', () => {
+  function openLeaderboard() {
     Sound.unlock();
+    updateRankBanner();
     renderLeaderboard();
     leaderboardModal.classList.add('open');
-  });
+  }
+
+  leaderboardBtn.addEventListener('click', openLeaderboard);
   closeLeaderboardBtn.addEventListener('click', () => leaderboardModal.classList.remove('open'));
   leaderboardModal.addEventListener('click', (e) => { if (e.target === leaderboardModal) leaderboardModal.classList.remove('open'); });
 
   /* =====================================================
      游戏主体逻辑
      ===================================================== */
-  const GAME_TIME = 30;
   let gridSize = 4;
   let numReds = 3;
 
@@ -811,7 +1467,7 @@
   const reds = new Set();
   let clickTimes = [];
   let score = 0;
-  let timeLeft = GAME_TIME;
+  let timeLeft = gameTime;
   let running = false;
   let timerId = null;
 
@@ -829,6 +1485,48 @@
   const redMinus    = document.getElementById('redMinus');
   const redPlus     = document.getElementById('redPlus');
   const sizeSegmented = document.getElementById('sizeSegmented');
+
+  /* ---------- 底部状态提示（语言切换后自动重渲染） ---------- */
+  let statusKey = '';
+  let statusParams = null;
+  let statusDone = false;
+  let statusColor = '';
+  let statusToken = 0;
+
+  function setStartLabel(key) {
+    startLabelKey = key;
+    btnLabel.textContent = t(key);
+  }
+
+  function renderStatus() {
+    if (!statusEl) return;
+    if (!statusKey) {
+      statusEl.textContent = '';
+      statusEl.classList.remove('done');
+      statusEl.style.color = '';
+      return;
+    }
+    statusEl.textContent = t(statusKey, statusParams);
+    statusEl.classList.toggle('done', statusDone);
+    statusEl.style.color = statusColor;
+  }
+
+  function setStatus(key, opts) {
+    opts = opts || {};
+    statusKey = key || '';
+    statusParams = opts.params || null;
+    statusDone = !!opts.done;
+    statusColor = opts.color || '';
+    const token = ++statusToken;
+    renderStatus();
+    if (opts.timeout > 0) {
+      setTimeout(() => {
+        if (statusToken !== token) return;
+        statusKey = ''; statusParams = null; statusDone = false; statusColor = '';
+        renderStatus();
+      }, opts.timeout);
+    }
+  }
 
   function fitBoard() {
     const r = boardArea.getBoundingClientRect();
@@ -989,9 +1687,9 @@
   function updateHUD() {
     scoreEl.textContent = score;
     timerEl.textContent = timeLeft;
-    const pct = Math.max(0, Math.min(1, timeLeft / GAME_TIME)) * 100;
+    const pct = Math.max(0, Math.min(1, timeLeft / gameTime)) * 100;
     progressBar.style.width = pct + '%';
-    const low = timeLeft <= 10;
+    const low = gameTime >= 15 ? timeLeft <= 10 : timeLeft <= Math.max(2, Math.ceil(gameTime / 3));
     progressBar.classList.toggle('low', low);
     timerEl.classList.toggle('urgent', low && running);
   }
@@ -1001,19 +1699,15 @@
     if (running) { running = false; clearInterval(timerId); }
 
     score = 0;
-    timeLeft = GAME_TIME;
-    btnLabel.textContent = '开始游戏';
+    timeLeft = gameTime;
+    setStartLabel('btn.start');
     cpsEl.textContent = '0.0';
     clickTimes = [];
 
     if (wasRunning) {
-      statusEl.textContent = '配置已更新，请重新开始';
-      statusEl.classList.remove('done');
-      statusEl.style.color = '';
+      setStatus('status.configChanged');
     } else {
-      statusEl.textContent = '';
-      statusEl.classList.remove('done');
-      statusEl.style.color = '';
+      setStatus('');
     }
 
     rebuildGrid();
@@ -1028,14 +1722,12 @@
     Sound.unlock(); Sound.start();
 
     score = 0;
-    timeLeft = GAME_TIME;
+    timeLeft = gameTime;
     running = true;
     clickTimes = [];
 
-    statusEl.textContent = '';
-    statusEl.classList.remove('done');
-    statusEl.style.color = '';
-    btnLabel.textContent = '重新开始';
+    setStatus('');
+    setStartLabel('btn.restart');
 
     spawnReds();
     updateHUD();
@@ -1058,12 +1750,10 @@
     progressBar.classList.remove('low');
     timerEl.classList.remove('urgent');
 
-    statusEl.textContent = `时间到！本局得分 ${score}`;
-    statusEl.classList.add('done');
-    statusEl.style.color = '';
-    btnLabel.textContent = '再来一局';
+    setStatus('status.timeUp', { params: { score: score }, done: true });
+    setStartLabel('btn.again');
 
-    const playedTime = Math.max(1, GAME_TIME);
+    const playedTime = Math.max(1, gameTime);
     const avgCps = (score / playedTime).toFixed(1);
     recordScore(score, avgCps, playedTime);
 
@@ -1089,12 +1779,10 @@
     progressBar.classList.remove('low');
     timerEl.classList.remove('urgent');
 
-    statusEl.textContent = `踩到空格！本局得分 ${score}`;
-    statusEl.classList.add('done');
-    statusEl.style.color = 'var(--error)';
-    btnLabel.textContent = '再来一局';
+    setStatus('status.failed', { params: { score: score }, done: true, color: 'var(--error)' });
+    setStartLabel('btn.again');
 
-    const playedTime = Math.max(1, GAME_TIME - timeLeft);
+    const playedTime = Math.max(1, gameTime - timeLeft);
     const avgCps = (score / playedTime).toFixed(1);
     recordScore(score, avgCps, playedTime);
 
@@ -1130,6 +1818,8 @@
 
   updateSizeButtons();
   updateRedStepper();
+  updateTimeControl();
+  applyLanguage(lang, false);
   applyConfig();
   fetchGlobalHighScore();
 
